@@ -785,7 +785,17 @@
     ls(SK,state);
     viewDay=currentDay(); render();              // 먼저 화면을 그리고
     try{ const raw=await idbGet("bible");         // 저장해 둔 본문을 불러와 다시 그림
-      if(raw){ fileBooks=parseBible(raw); render(); } }catch(e){}
+      if(raw){
+        fileBooks=parseBible(raw);
+        // 절 수 가중치가 없으면 재계산 (localStorage.clear() 후 복구)
+        if(!lg('tg_plan_w')){
+          const w={};
+          fileBooks.forEach((bk,bi)=>{ w[bi]={}; Object.entries(bk.chapters).forEach(([ch,vs])=>{ w[bi][+ch]=vs.length; }); });
+          ls('tg_plan_w',w); plan=buildPlan(w);
+        }
+        render();
+      }
+    }catch(e){}
   })();
 })();
 </script>
