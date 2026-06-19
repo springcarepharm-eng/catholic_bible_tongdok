@@ -301,26 +301,20 @@
     } else { window.prompt("이 프롬프트를 복사한 뒤 Claude 새 대화에 붙여넣으세요:",text); openClaude(); }
   }
 
-  // ---- Claude API 자동 받기 ----
+  // ---- Claude API 자동 받기 (Vercel /api/claude 중계) ----
   let aiFetching = new Set();
   async function fetchDayAI(d) {
-    const key = state.claudeApiKey;
-    if (!key || aiFetching.has(d) || aiCache[d]) return;
+    if (aiFetching.has(d) || aiCache[d]) return;
     aiFetching.add(d);
-    // 로딩 힌트
     const bgEl = document.getElementById("bg"), hmEl = document.getElementById("homily");
     if (bgEl && !bgEl.value) bgEl.placeholder = "AI가 배경지식을 가져오는 중…";
     if (hmEl && !hmEl.value) hmEl.placeholder = "AI가 강론을 가져오는 중…";
     const ref = fmt(plan[d - 1]);
     const prompt = basePrompt(ref) + "\n\n위 지침에 따라 오늘 범위에 대해 다음 형식으로 작성해 주세요.\n\n[배경지식]\n(역사적·문학적 맥락과 가톨릭 독해 관점. 3-5문단)\n\n[강론·해설]\n(이 본문이 내 삶에 건네는 말씀. 따뜻하게, 3-4문단)";
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch("/api/claude", {
         method: "POST",
-        headers: {
-          "x-api-key": key,
-          "anthropic-version": "2023-06-01",
-          "content-type": "application/json"
-        },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({
           model: "claude-haiku-4-5-20251001",
           max_tokens: 1800,
@@ -336,11 +330,9 @@
       const homily = hmMatch ? hmMatch[1].trim() : "";
       aiCache[d] = { bg, homily, fetchedAt: toDateStr(new Date()) };
       ls(AK, aiCache);
-      // notes에 없으면 채움 (사용자 입력 우선)
       if (!notes[d]) notes[d] = { bg: "", homily: "" };
       if (!notes[d].bg) { notes[d].bg = bg; ls(NK, notes); }
       if (!notes[d].homily) { notes[d].homily = homily; ls(NK, notes); }
-      // 현재 보고 있는 날이면 텍스트박스 즉시 갱신
       if (viewDay === d) {
         const bgEl2 = document.getElementById("bg"), hmEl2 = document.getElementById("homily");
         if (bgEl2 && !bgEl2.value) { bgEl2.value = bg; bgEl2.placeholder = "배경지식"; }
@@ -349,7 +341,7 @@
     } catch(e) { console.error("fetchDayAI error:", e); }
     aiFetching.delete(d);
   }
-  function maybeAutoFetch(d) { if (state.claudeApiKey && !aiCache[d]) fetchDayAI(d); }
+  function maybeAutoFetch(d) { if (!aiCache[d]) fetchDayAI(d); }
 
   const app=document.getElementById("app"), filein=document.getElementById("filein");
   const $=id=>document.getElementById(id);
@@ -565,28 +557,16 @@
       <div class="grid" style="margin-top:14px">
         <div class="col">
           <div class="panel">
-            <h3>배경지식 <span class="tag">${state.claudeApiKey?(aiCache[d]?'AI 받음':'AI 자동 받기'):'선택 · 보관'}</span></h3>
-            <textarea class="ai" id="bg" placeholder="${state.claudeApiKey&&!aiCache[d]?'잠시 후 AI가 채워드려요…':'배경지식을 여기에 입력하거나 붙여넣으세요.'}">${esc((nt.bg||(aiCache[d]&&aiCache[d].bg)||""))}</textarea>
+            <h3>배경지식 <span class="tag">${aiCache[d]?'AI 받음':'AI 자동 받기'}</span></h3>
+            <textarea class="ai" id="bg" placeholder="${!aiCache[d]?'잠시 후 AI가 채워드려요…':'배경지식'}">${esc((nt.bg||(aiCache[d]&&aiCache[d].bg)||""))}</textarea>
           </div>
         </div>
         <div class="col">
           <div class="panel">
-            <h3>강론 · 해설 <span class="tag">${state.claudeApiKey?(aiCache[d]?'AI 받음':'AI 자동 받기'):'선택 · 보관'}</span></h3>
-            <textarea class="ai" id="homily" placeholder="${state.claudeApiKey&&!aiCache[d]?'잠시 후 AI가 채워드려요…':'강론을 여기에 입력하거나 붙여넣으세요.'}">${esc((nt.homily||(aiCache[d]&&aiCache[d].homily)||""))}</textarea>
+            <h3>강론 · 해설 <span class="tag">${aiCache[d]?'AI 받음':'AI 자동 받기'}</span></h3>
+            <textarea class="ai" id="homily" placeholder="${!aiCache[d]?'잠시 후 AI가 채워드려요…':'강론·해설'}">${esc((nt.homily||(aiCache[d]&&aiCache[d].homily)||""))}</textarea>
           </div>
         </div>
-      </div>
-
-      <div class="panel" style="margin-top:14px">
-        <h3>AI 자동 받기 <span class="tag">선택 기능</span></h3>
-        <p class="hint">Anthropic API 키를 입력하면 날짜를 열 때 Claude Haiku가 배경지식·강론을 자동으로 채워드려요.</p>
-        <div class="reminder-row" style="margin-top:8px;gap:6px">
-          <input type="password" id="apiKeyInput" placeholder="sk-ant-…" value="${esc(state.claudeApiKey||'')}" style="flex:1;font-size:13px;font-family:monospace">
-          <button class="btn btn-sm btn-gold" id="apiKeySave">저장</button>
-          ${state.claudeApiKey?'<button class="btn btn-ghost btn-sm" id="apiKeyDel">삭제</button>':''}
-        </div>
-        ${state.claudeApiKey?'<p class="hint" style="color:var(--gold-bright);margin-top:6px">✓ 등록됨 — 각 날짜를 열면 자동으로 받아와요.</p>':''}
-        <p class="hint" style="margin-top:4px">키는 이 기기에만 저장되며 외부 서버로 전송되지 않아요. <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:var(--muted)">Anthropic Console에서 발급 →</a></p>
       </div>
 
       <div class="panel" style="margin-top:14px">
@@ -683,13 +663,6 @@
       if(viewDay===d) viewDay=isDone(d)?d:currentDay(); render();
     };
     if($("undo")) $("undo").onclick=()=>{state.completed=state.completed.filter(x=>x!==d); delete state.completedDates[d]; ls(SK,state); render();};
-    if($("apiKeySave")) $("apiKeySave").onclick=()=>{
-      const val=($("apiKeyInput").value||"").trim();
-      state.claudeApiKey=val; ls(SK,state);
-      render(); if(val) fetchDayAI(d);
-    };
-    if($("apiKeyDel")) $("apiKeyDel").onclick=()=>{ state.claudeApiKey=""; ls(SK,state); render(); };
-    // API 키가 있고 이 날 캐시가 없으면 자동 받기
     maybeAutoFetch(d);
   }
 
