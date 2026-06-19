@@ -110,20 +110,8 @@
   textarea:focus,input:focus{outline:none; border-color:var(--gold)}
   textarea::placeholder,input::placeholder{color:var(--muted-2)}
   textarea#med{min-height:260px}
-  textarea.ai{min-height:90px; font-size:13.5px; color:#ddd6c6; line-height:1.7}
+  textarea.ai{min-height:90px; font-size:13.5px; color:#ddd6c6; line-height:1.8; resize:none; overflow:hidden}
   #bg{min-height:220px} #homily{min-height:178px}
-  .ai-view{min-height:120px;font-size:13.5px;color:#ddd6c6;line-height:1.8;padding:2px 0;cursor:text}
-  #bg-view{min-height:220px} #homily-view{min-height:178px}
-  .ai-view h3,.ai-view h4{color:#c9b96e;margin:12px 0 4px;font-size:14px}
-  .ai-view strong{color:#e8d48a}
-  .ai-view blockquote{border-left:3px solid #c9b96e;padding-left:10px;color:#aaa8;margin:6px 0}
-  .ai-view table{border-collapse:collapse;width:100%;font-size:12.5px;margin:8px 0}
-  .ai-view th,.ai-view td{border:1px solid #3a3a5a;padding:5px 8px;text-align:left}
-  .ai-view th{background:#1e2140;color:#c9b96e}
-  .ai-view ul,.ai-view ol{padding-left:18px;margin:4px 0}
-  .ai-view li{margin:3px 0}
-  .ai-view p{margin:6px 0}
-  .ai-edit-btn{font-size:11px;padding:2px 8px;opacity:0.6;float:right;margin-top:-2px}
   #verse{font-family:'Noto Serif KR',serif}
 
   .savebar{display:flex; align-items:center; gap:10px; margin-top:12px; padding-left:8px}
@@ -155,7 +143,6 @@
   }
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
 <div id="app"><div class="loading">노트를 펼치는 중…</div></div>
@@ -329,19 +316,19 @@
 위 지침에 따라 오늘 범위에 대해 아래 두 섹션을 반드시 모두 작성해 주세요. 각 섹션 제목([배경지식], [강론·해설])은 반드시 대괄호 그대로 유지해 주세요.
 
 [배경지식]
-오늘 본문을 신학적으로 깊이 탐구해 주세요. 아래 항목 중 본문에 중요한 것을 골라 작성해 주세요.
-① 장르와 해석 원칙: 문학 장르와 가톨릭 교회의 해석 원칙. 성경의 4가지 의미(문자적·우의적·도덕적·신비적) 중 해당되는 것.
-② 핵심 신학 개념: 중요한 신학 용어·개념 1-2가지, 히브리어·그리스어 원어 뉘앙스, 관련 CCC 항 번호.
-③ 구원 역사 속 위치와 예형론: 신약·예수님과의 연결.
-④ 현대인에게 어렵거나 낯선 부분이 있다면 교회의 해석과 함께 설명.
-→ 서식: 마크다운 헤더(###)·굵은 글씨·표를 적극 활용해 구조적으로 작성.
-→ 언어: 전문 용어가 나올 때마다 반드시 괄호 안에 쉬운 말로 바로 풀어줄 것. 예) 예형론(구약의 사건이 예수님을 미리 가리키는 것). 중학생도 이해할 수 있는 문장으로.
+오늘 본문을 신학적으로 깊이 탐구하되, 중학생도 바로 이해할 수 있는 말로 써 주세요. 4-5문단 분량의 자연스러운 글로 작성해 주세요 (헤더나 기호 없이 흐르는 문장으로).
+다음 내용 중 오늘 본문에 중요한 것을 골라 녹여 주세요.
+- 이 본문의 문학 장르와 가톨릭 교회가 어떻게 읽도록 가르치는지
+- 핵심 신학 개념 1-2가지 (전문 용어는 반드시 괄호 안에 쉬운 말로 바로 풀어서. 예: 예형론(구약 사건이 예수님을 미리 가리키는 것))
+- CCC(가톨릭교회 교리서) 관련 항 번호가 있으면 자연스럽게 언급
+- 구원 역사의 큰 흐름 속에서 이 본문이 어디에 있는지, 신약·예수님과 어떻게 연결되는지
+- 현대인이 어렵거나 불편하게 느낄 수 있는 부분이 있다면 교회의 해석 관점과 함께 솔직하게
 
 [강론·해설]
-매일미사 강론과 오늘의 묵상 자료를 참고하여 3-4문단으로 작성해 주세요.
-• 오늘 본문의 핵심 메시지 한 가지
-• 이 말씀이 지금 내 일상·관계·신앙에 닿는 구체적인 부분
-• 실천할 수 있는 작은 권고나 기도 방향
+매일미사 강론과 오늘의 묵상 자료를 참고하여 3-4문단의 자연스러운 글로 작성해 주세요 (헤더나 기호 없이).
+- 오늘 본문이 전하는 핵심 메시지 한 가지를 중심으로
+- 이 말씀이 지금 내 일상·관계·신앙에 어떻게 닿는지 구체적으로
+- 실천할 수 있는 작은 권고나 기도 방향
 → 사제가 강론하듯 따뜻하고 친근한 말투로, 위로와 도전이 함께 담기도록.`;
     try {
       const res = await fetch("/api/claude", {
@@ -367,38 +354,18 @@
       if (!notes[d].homily) { notes[d].homily = homily; ls(NK, notes); }
       if (viewDay === d) {
         const bgEl2 = document.getElementById("bg"), hmEl2 = document.getElementById("homily");
-        if (bgEl2 && !bgEl2.value) { bgEl2.value = bg; bgEl2.placeholder = "배경지식"; renderAI('bg'); }
-        if (hmEl2 && !hmEl2.value) { hmEl2.value = homily; hmEl2.placeholder = "강론·해설"; renderAI('homily'); }
+        if (bgEl2 && !bgEl2.value) { bgEl2.value = bg; bgEl2.placeholder = "배경지식"; autoResize(bgEl2); }
+        if (hmEl2 && !hmEl2.value) { hmEl2.value = homily; hmEl2.placeholder = "강론·해설"; autoResize(hmEl2); }
       }
     } catch(e) { console.error("fetchDayAI error:", e); }
     aiFetching.delete(d);
   }
   function maybeAutoFetch(d) { if (!aiCache[d]) fetchDayAI(d); }
 
-  function renderAI(id) {
-    const ta = document.getElementById(id);
-    const view = document.getElementById(id+'-view');
-    if (!ta || !view) return;
-    if (ta.value.trim()) {
-      view.innerHTML = (typeof marked !== 'undefined') ? marked.parse(ta.value) : ta.value.replace(/\n/g,'<br>');
-    } else {
-      view.innerHTML = '<span style="color:#555;font-style:italic">'+ta.placeholder+'</span>';
-    }
-    view.onclick = () => toggleAIEdit(id);
-  }
-  function toggleAIEdit(id) {
-    const ta = document.getElementById(id);
-    const view = document.getElementById(id+'-view');
-    const btn = document.getElementById(id+'-edit-btn');
-    if (!ta || !view) return;
-    if (ta.style.display === 'none') {
-      view.style.display = 'none'; ta.style.display = ''; ta.focus();
-      if (btn) btn.textContent = '완료';
-    } else {
-      if (window._saveNotes) window._saveNotes();
-      ta.style.display = 'none'; view.style.display = ''; renderAI(id);
-      if (btn) btn.textContent = '편집';
-    }
+  function autoResize(el) {
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
   }
 
   const app=document.getElementById("app"), filein=document.getElementById("filein");
@@ -611,16 +578,14 @@
       <div class="grid" style="margin-top:14px">
         <div class="col">
           <div class="panel">
-            <h3>배경지식 <span class="tag">${aiCache[d]?'AI 받음':'AI 자동 받기'}</span><button class="btn btn-sm ai-edit-btn" id="bg-edit-btn" onclick="toggleAIEdit('bg')">편집</button></h3>
-            <div class="ai-view" id="bg-view"></div>
-            <textarea class="ai" id="bg" style="display:none" placeholder="${!aiCache[d]?'잠시 후 AI가 채워드려요…':'배경지식'}">${esc((nt.bg||(aiCache[d]&&aiCache[d].bg)||""))}</textarea>
+            <h3>배경지식 <span class="tag">${aiCache[d]?'AI 받음':'AI 자동 받기'}</span></h3>
+            <textarea class="ai" id="bg" placeholder="${!aiCache[d]?'잠시 후 AI가 채워드려요…':'배경지식'}">${esc((nt.bg||(aiCache[d]&&aiCache[d].bg)||""))}</textarea>
           </div>
         </div>
         <div class="col">
           <div class="panel">
-            <h3>강론 · 해설 <span class="tag">${aiCache[d]?'AI 받음':'AI 자동 받기'}</span><button class="btn btn-sm ai-edit-btn" id="homily-edit-btn" onclick="toggleAIEdit('homily')">편집</button></h3>
-            <div class="ai-view" id="homily-view"></div>
-            <textarea class="ai" id="homily" style="display:none" placeholder="${!aiCache[d]?'잠시 후 AI가 채워드려요…':'강론·해설'}">${esc((nt.homily||(aiCache[d]&&aiCache[d].homily)||""))}</textarea>
+            <h3>강론 · 해설 <span class="tag">${aiCache[d]?'AI 받음':'AI 자동 받기'}</span></h3>
+            <textarea class="ai" id="homily" placeholder="${!aiCache[d]?'잠시 후 AI가 채워드려요…':'강론·해설'}">${esc((nt.homily||(aiCache[d]&&aiCache[d].homily)||""))}</textarea>
             <div style="margin-top:10px;display:flex;align-items:center;gap:10px">
               <button class="btn btn-sm" id="askMore">✦ 오늘 말씀 더 알아보기</button>
               <span class="saved-flag" id="copyflag" style="padding-left:0">복사됐어요 ✓</span>
@@ -714,7 +679,7 @@
     const saveNotes=()=>{ notes[d]={bg:$("bg").value, homily:$("homily").value}; ls(NK,notes); };
     window._saveNotes = saveNotes;
     $("bg").onblur=saveNotes; $("homily").onblur=saveNotes;
-    renderAI('bg'); renderAI('homily');
+    [$("bg"),$("homily")].forEach(el=>{ if(!el) return; autoResize(el); el.oninput=()=>autoResize(el); });
 
     $("save").onclick=()=>{
       entries[d]={med:$("med").value, verse:$("verse").value, savedAt:new Date().toISOString()};
