@@ -31,17 +31,49 @@
   .eyebrow{font-size:11px; letter-spacing:.26em; text-transform:uppercase; color:var(--gold); font-weight:700; margin:0 0 5px}
   h1{font-family:'Noto Serif KR',serif; font-weight:600; font-size:23px; margin:0 0 14px}
 
-  .top{display:flex; align-items:center; gap:16px; flex-wrap:wrap;
-    background:var(--night-2); border:1px solid var(--line-soft); border-radius:var(--radius); padding:14px 16px; margin-bottom:14px}
-  .halo{position:relative; width:72px; height:72px; flex:0 0 auto}
+  /* 상단 3칼럼 바 */
+  .top-bar{display:grid; grid-template-columns:1fr auto 1fr; gap:14px; margin-bottom:14px; align-items:start}
+  .top-center{display:flex; flex-direction:column; align-items:center; gap:10px; min-width:140px}
+  .top-actions{display:flex; gap:6px; flex-wrap:wrap; justify-content:center}
+  .halo{position:relative; width:80px; height:80px; flex:0 0 auto}
   .halo svg{transform:rotate(-90deg)}
   .halo .c{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center}
-  .halo .c .n{font-family:'Cormorant Garamond',serif; font-size:20px; font-weight:600; color:var(--gold-bright); line-height:1}
+  .halo .c .n{font-family:'Cormorant Garamond',serif; font-size:22px; font-weight:600; color:var(--gold-bright); line-height:1}
   .halo .c .d{font-size:9px; color:var(--muted)}
-  .top-meta{flex:1 1 160px; min-width:150px}
+  .top-meta{text-align:center}
   .top-meta .big{font-family:'Noto Serif KR',serif; font-size:16px}
   .top-meta .small{color:var(--muted); font-size:12px; margin-top:2px}
-  .top-actions{display:flex; gap:8px; flex-wrap:wrap}
+  /* 미니 달력 */
+  .mini-cal{background:linear-gradient(180deg,var(--night-2),var(--night-3)); border:1px solid var(--line-soft); border-radius:var(--radius); padding:12px}
+  .mini-cal-nav{display:flex; align-items:center; justify-content:space-between; margin-bottom:8px}
+  .mini-cal-title{font-size:13px; font-weight:600; font-family:'Noto Serif KR',serif; color:var(--gold)}
+  .mini-cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:2px}
+  .mch{text-align:center; font-size:10px; color:var(--muted); padding:3px 0; font-weight:600}
+  .mcc{height:36px; border-radius:6px; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:default; background:rgba(0,0,0,.14); font-size:12px}
+  .mcc[data-dn]{cursor:pointer; background:rgba(236,230,216,.07)}
+  .mcc[data-dn]:hover{background:rgba(236,230,216,.18)}
+  .mcc.me{background:transparent!important}
+  .mcc.mt{outline:2px solid var(--gold); outline-offset:-2px}
+  .mcc.md span.mday{color:var(--gold); font-weight:700}
+  .mcc.mm span.mday{color:var(--muted-2)}
+  .mchk{font-size:9px; color:var(--gold); line-height:1}
+  .mdot{width:5px; height:5px; border-radius:50%; background:#e06060; margin-top:1px}
+  /* 우측 인덱스+검색 */
+  .top-index{background:linear-gradient(180deg,var(--night-2),var(--night-3)); border:1px solid var(--line-soft); border-radius:var(--radius); padding:12px; display:flex; flex-direction:column; gap:8px}
+  .top-index h3{font-family:'Noto Serif KR',serif; font-size:13px; font-weight:600; color:var(--gold); margin:0 0 4px}
+  .tidx-book{width:100%; padding:7px 8px; background:rgba(0,0,0,.25); color:var(--fg); border:1px solid rgba(236,230,216,.2); border-radius:8px; font-size:13px; font-family:inherit}
+  .tidx-chs{display:flex; flex-wrap:wrap; gap:3px; max-height:120px; overflow-y:auto}
+  .tidx-ch{min-width:30px; height:30px; font-size:12px; padding:0 4px; border-radius:7px}
+  .tidx-ch.sel{background:var(--gold)!important; color:#1a1710!important; border-color:var(--gold)!important}
+  .srch-input{width:100%; padding:8px 10px; background:rgba(0,0,0,.25); color:var(--fg); border:1px solid rgba(236,230,216,.2); border-radius:8px; font-size:13px; font-family:inherit; box-sizing:border-box}
+  .srch-input:focus{outline:none; border-color:var(--gold)}
+  .srch-results{display:flex; flex-direction:column; gap:4px; max-height:180px; overflow-y:auto}
+  .srch-hit{padding:7px 9px; border-radius:8px; background:rgba(0,0,0,.2); border:1px solid var(--line-soft); cursor:pointer; font-size:12px}
+  .srch-hit:hover{background:rgba(236,230,216,.08)}
+  .srch-ref{font-size:11px; color:var(--gold); font-weight:700; margin-bottom:2px}
+  .srch-txt{color:var(--muted); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; line-height:1.5}
+  /* 인덱스 페이지 */
+  .idx-ch-sel{background:var(--gold)!important; color:#1a1710!important}
 
   .btn{font-family:inherit; font-size:13px; font-weight:500; cursor:pointer; border-radius:10px;
     padding:9px 13px; border:1px solid var(--line); background:rgba(255,255,255,.03); color:var(--ink); transition:.16s; white-space:nowrap}
@@ -99,23 +131,15 @@
 
   .foot{color:var(--muted-2); font-size:11px; text-align:center; margin-top:20px; line-height:1.7}
   .loading{color:var(--muted); text-align:center; padding:60px 0}
-  /* 달력 */
-  .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:3px}
-  .cal-hd{text-align:center; font-size:11px; color:var(--muted); padding:4px 0; font-weight:600}
-  .cal-cell{min-height:44px; border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:default; position:relative; background:rgba(0,0,0,.12)}
-  .cal-cell[data-daynum]{cursor:pointer; background:rgba(236,230,216,.07)}
-  .cal-cell[data-daynum]:hover{background:rgba(236,230,216,.16)}
-  .cal-empty{background:transparent!important}
-  .cal-day{font-size:13px; line-height:1}
-  .cal-today{outline:2px solid var(--gold); outline-offset:-2px}
-  .cal-done .cal-day{color:var(--gold); font-weight:700}
-  .cal-check{font-size:10px; color:var(--gold); line-height:1; margin-top:1px}
-  .cal-missed .cal-day{color:var(--muted)}
-  .cal-dot{width:5px; height:5px; border-radius:50%; background:#e06060; margin-top:2px}
-  .cal-dot-inline{display:inline-block; width:7px; height:7px; border-radius:50%; background:#e06060; vertical-align:middle}
-  /* 인덱스 */
-  .idx-ch-sel{background:var(--gold)!important; color:#1a1710!important}
-  @media (max-width:760px){ .grid{grid-template-columns:1fr} .passage{max-height:62vh} }
+  @media (max-width:900px){
+    .top-bar{grid-template-columns:1fr}
+    .top-center{order:1; flex-direction:row; justify-content:flex-start; gap:14px; text-align:left}
+    .top-meta{text-align:left}
+    .mini-cal{order:2}
+    .top-index{order:3}
+    .grid{grid-template-columns:1fr}
+    .passage{max-height:62vh}
+  }
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -345,9 +369,9 @@
     });
   }
 
-  let calMode=false, calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
+  let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
 
-  function renderCal(){
+  function miniCalHTML(){
     const dateToDay={};
     Object.entries(state.completedDates||{}).forEach(([d,dt])=>{ dateToDay[dt]=+d; });
     const today=toDateStr(new Date());
@@ -361,71 +385,91 @@
     const DOW=['일','월','화','수','목','금','토'];
     const MNAMES=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
     let cells='';
-    for(let i=0;i<firstDow;i++) cells+='<div class="cal-cell cal-empty"></div>';
+    for(let i=0;i<firstDow;i++) cells+='<div class="mcc me"></div>';
     for(let day=1;day<=lastDate;day++){
       const ds=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
       const dn=dateToDay[ds];
-      const isToday=ds===today;
       const isMissed=ds>=startDate&&ds<today&&!dn;
-      let cls='cal-cell'+(isToday?' cal-today':'')+(dn?' cal-done':isMissed?' cal-missed':'');
-      const inner=dn?`<span class="cal-day">${day}</span><span class="cal-check">✓</span>`
-        :isMissed?`<span class="cal-day">${day}</span><div class="cal-dot"></div>`
-        :`<span class="cal-day">${day}</span>`;
-      cells+=`<div class="${cls}"${dn?` data-daynum="${dn}"`:''}>${inner}</div>`;
+      const cls='mcc'+(ds===today?' mt':'')+(dn?' md':isMissed?' mm':'');
+      const inner=dn?`<span class="mday">${day}</span><span class="mchk">✓</span>`
+        :isMissed?`<span class="mday">${day}</span><div class="mdot"></div>`
+        :`<span class="mday">${day}</span>`;
+      cells+=`<div class="${cls}"${dn?` data-dn="${dn}"`:''}>${inner}</div>`;
     }
-    app.innerHTML=`
-      <p class="eyebrow">밤의 통독 · 달력</p>
-      <div class="navrow" style="margin-bottom:14px">
-        <button class="btn btn-sm btn-ghost" id="calBack">← 통독으로 돌아가기</button>
+    return `<div class="mini-cal">
+      <div class="mini-cal-nav">
+        <button class="btn btn-sm" id="calPrev" ${!canPrev?'disabled':''}>←</button>
+        <span class="mini-cal-title">${calYear}년 ${MNAMES[calMonth]}</span>
+        <button class="btn btn-sm" id="calNext" ${!canNext?'disabled':''}>→</button>
       </div>
-      <div class="panel">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-          <button class="btn btn-sm" id="calPrev" ${!canPrev?'disabled':''}>←</button>
-          <span style="font-size:1.1rem;font-weight:600">${calYear}년 ${MNAMES[calMonth]}</span>
-          <button class="btn btn-sm" id="calNext" ${!canNext?'disabled':''}>→</button>
-        </div>
-        <div class="cal-grid">
-          ${DOW.map(d=>`<div class="cal-hd">${d}</div>`).join('')}
-          ${cells}
-        </div>
-        <p class="hint" style="margin-top:12px;padding-left:0"><span style="color:var(--gold)">✓</span> 완료 &nbsp;·&nbsp; <span class="cal-dot-inline"></span> 미완료 &nbsp;·&nbsp; 완료된 날짜를 탭하면 그날 묵상을 볼 수 있어요.</p>
+      <div class="mini-cal-grid">
+        ${DOW.map(d=>`<div class="mch">${d}</div>`).join('')}
+        ${cells}
       </div>
-      <p class="foot">밤의 통독 · 본문은 기기에만 보관 · 매일 밤, 한 장씩.</p>
-    `;
-    $('calBack').onclick=()=>{calMode=false; render();};
-    $('calPrev').onclick=()=>{if(calMonth===0){calYear--;calMonth=11;}else calMonth--; renderCal();};
-    $('calNext').onclick=()=>{if(calMonth===11){calYear++;calMonth=0;}else calMonth++; renderCal();};
-    app.querySelectorAll('.cal-cell[data-daynum]').forEach(el=>{
-      el.onclick=()=>{calMode=false; viewDay=+el.dataset.daynum; render(); window.scrollTo({top:0,behavior:'smooth'});};
-    });
+      <p style="font-size:10px;color:var(--muted);margin:6px 0 0;line-height:1.4"><span style="color:var(--gold)">✓</span> 완료 &nbsp;·&nbsp; <span class="mdot" style="display:inline-block;vertical-align:middle"></span> 미완료</p>
+    </div>`;
+  }
+
+  function topIndexHTML(){
+    const bk=BOOKS[idxBook];
+    const chBtns=Array.from({length:bk[1]},(_,i)=>{
+      const ch=i+1;
+      return `<button class="btn btn-sm tidx-ch${ch===idxChapter?' sel':''}" data-ch="${ch}">${ch}</button>`;
+    }).join('');
+    return `<div class="top-index">
+      <h3>성경 찾아보기</h3>
+      <select id="tidxBook">${BOOKS.map((b,i)=>`<option value="${i}"${i===idxBook?' selected':''}>${b[0]}</option>`).join('')}</select>
+      <div class="tidx-chs" id="tidxChs">${chBtns}</div>
+      <input class="srch-input" id="bibleSearch" placeholder="🔍 본문 검색 (2글자 이상)…" autocomplete="off">
+      <div class="srch-results" id="srchResults"></div>
+    </div>`;
+  }
+
+  function searchBible(q){
+    if(!fileBooks||q.length<2) return [];
+    const ql=q.toLowerCase(); const hits=[];
+    for(let bi=0;bi<BOOKS.length;bi++){
+      const fb=fileBooks[bi]; if(!fb) continue;
+      for(const ch in fb.chapters){
+        for(const v of fb.chapters[ch]){
+          if(v.t.toLowerCase().includes(ql)){
+            hits.push({bi,ch:+ch,v:v.v,t:v.t});
+            if(hits.length>=25) return hits;
+          }
+        }
+      }
+    }
+    return hits;
   }
 
   function render(){
     if(indexMode){ renderIndex(); return; }
-    if(calMode){ renderCal(); return; }
     const cur=currentDay(), done=state.completed.length, pct=done/DAYS;
-    const R=31,C=2*Math.PI*R,off=C*(1-pct), d=viewDay, slice=plan[d-1];
+    const R=35,C=2*Math.PI*R,off=C*(1-pct), d=viewDay, slice=plan[d-1];
     const e=entries[d]||{med:"",verse:""}, nt=notes[d]||{bg:"",homily:""};
 
     app.innerHTML=`
       <p class="eyebrow">밤의 통독 · 자기 전 한 장</p>
       <h1>가톨릭 성경 1년 통독</h1>
 
-      <div class="top">
-        <div class="halo"><svg width="72" height="72" viewBox="0 0 72 72">
-          <circle cx="36" cy="36" r="${R}" fill="none" stroke="rgba(236,230,216,.10)" stroke-width="5"/>
-          <circle cx="36" cy="36" r="${R}" fill="none" stroke="var(--gold)" stroke-width="5" stroke-linecap="round"
-            stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/></svg>
-          <div class="c"><span class="n">${done}</span><span class="d">/${DAYS}</span></div></div>
-        <div class="top-meta">
-          <div class="big">${done>=DAYS?"통독 완주 🕊️":`오늘은 ${cur}일째`}</div>
-          <div class="small">${fileBooks?"본문 불러옴 ✓":"본문 파일 미연결"} · 전체의 ${(pct*100).toFixed(1)}%</div>
+      <div class="top-bar">
+        ${miniCalHTML()}
+        <div class="top-center">
+          <div class="halo"><svg width="80" height="80" viewBox="0 0 80 80">
+            <circle cx="40" cy="40" r="${R}" fill="none" stroke="rgba(236,230,216,.10)" stroke-width="5"/>
+            <circle cx="40" cy="40" r="${R}" fill="none" stroke="var(--gold)" stroke-width="5" stroke-linecap="round"
+              stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/></svg>
+            <div class="c"><span class="n">${done}</span><span class="d">/${DAYS}</span></div></div>
+          <div class="top-meta">
+            <div class="big">${done>=DAYS?"통독 완주 🕊️":`오늘은 ${cur}일째`}</div>
+            <div class="small">${fileBooks?"본문 불러옴 ✓":"본문 미연결"} · ${(pct*100).toFixed(1)}%</div>
+          </div>
+          <div class="top-actions">
+            <button class="btn btn-sm" id="loadBtn">📖 성경 파일</button>
+            <button class="btn btn-sm" id="icsBtn">🔔 알림</button>
+          </div>
         </div>
-        <div class="top-actions">
-          <button class="btn btn-sm" id="loadBtn">📖 성경 파일</button>
-          <button class="btn btn-sm" id="calOpenBtn">📅 달력</button>
-          <button class="btn btn-sm" id="icsBtn">🔔 매일 알림</button>
-        </div>
+        ${topIndexHTML()}
       </div>
 
       <div class="navrow">
@@ -434,15 +478,11 @@
         <button class="btn btn-sm" id="prev" ${d<=1?'disabled':''}>←</button>
         <button class="btn btn-sm btn-ghost" id="today">오늘</button>
         <button class="btn btn-sm" id="next" ${d>=DAYS?'disabled':''}>→</button>
-        <button class="btn btn-sm btn-ghost" id="idxOpenBtn" title="책·장 찾아보기">📖</button>
       </div>
 
+      <!-- 상단: 성경본문 + 구절·묵상 -->
       <div class="grid">
         <div class="col">
-          <div class="panel">
-            <h3>배경지식 <span class="tag">선택 · 보관</span></h3>
-            <textarea class="ai" id="bg" placeholder="‘오늘 배경·강론 받기’로 Claude에서 읽으면 끝이에요. 남기고 싶을 때만 여기에 붙여넣어 보관하세요. (선택)">${esc(nt.bg||"")}</textarea>
-          </div>
           <div class="panel">
             <h3>오늘의 말씀</h3>
             <p class="reading-title">${fmt(slice)}</p>
@@ -463,22 +503,28 @@
               ${isDone(d)?'<button class="btn btn-ghost btn-sm" id="undo">읽음 취소</button>':''}
               <span class="saved-flag" id="flag">저장됨 ✓</span>
             </div>
-          </div>
-          <div class="panel">
-            <h3>강론 · 해설 <span class="tag">선택 · 보관</span></h3>
-            <textarea class="ai" id="homily" placeholder="‘오늘 배경·강론 받기’로 Claude에서 읽으면 끝이에요. 보관하고 싶을 때만 여기에 붙여넣으세요. (선택)">${esc(nt.homily||"")}</textarea>
+            <div style="padding-left:8px;margin-top:10px;display:flex;align-items:center;gap:10px">
+              <button class="btn btn-sm" id="askGen" title="프롬프트 복사 후 Claude 새 대화 열기">✦ 오늘 배경·강론 받기</button>
+              <span class="saved-flag" id="copyflag" style="padding-left:0">복사됐어요 ✓</span>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="panel" style="margin-top:14px">
-        <h3>Claude에게 더 묻기 <span class="tag">새 대화</span></h3>
-        <p class="hint" style="padding-left:8px; margin-top:0">누르면 지침이 담긴 프롬프트가 복사되고 Claude 새 대화가 열려요. 길게 눌러 <b>붙여넣기</b> → 거기서 배경·강론을 읽으면 끝입니다. 앱에 남기려면 위 칸에 붙여넣어 보관(선택). 매번 새 대화라 토큰도 아껴요.</p>
-        <div class="reminder-row" style="margin-top:10px">
-          <button class="btn btn-sm" id="askGen">✦ 오늘 배경·강론 받기</button>
-          <button class="btn btn-sm" id="askQ">💬 이 본문에 대해 질문하기</button>
+      <!-- 하단: 배경지식 + 강론해설 -->
+      <div class="grid" style="margin-top:14px">
+        <div class="col">
+          <div class="panel">
+            <h3>배경지식 <span class="tag">선택 · 보관</span></h3>
+            <textarea class="ai" id="bg" placeholder="'오늘 배경·강론 받기' 후 Claude에서 읽은 내용을 남기고 싶을 때 붙여넣어 보관하세요. (선택)">${esc(nt.bg||"")}</textarea>
+          </div>
         </div>
-        <p class="saved-flag" id="copyflag" style="padding-left:8px; margin:8px 0 0">복사됐어요 ✓ — 새 대화에 붙여넣기 하세요</p>
+        <div class="col">
+          <div class="panel">
+            <h3>강론 · 해설 <span class="tag">선택 · 보관</span></h3>
+            <textarea class="ai" id="homily" placeholder="'오늘 배경·강론 받기' 후 Claude에서 받은 강론을 보관하고 싶을 때 붙여넣으세요. (선택)">${esc(nt.homily||"")}</textarea>
+          </div>
+        </div>
       </div>
 
       <div class="panel" style="margin-top:14px">
@@ -520,17 +566,47 @@
     $("prev").onclick=()=>{if(d>1){viewDay=d-1;render();}};
     $("next").onclick=()=>{if(d<DAYS){viewDay=d+1;render();}};
     $("today").onclick=()=>{viewDay=currentDay();render();};
-    if($("idxOpenBtn")) $("idxOpenBtn").onclick=()=>{indexMode=true; renderIndex();};
-    if($("calOpenBtn")) $("calOpenBtn").onclick=()=>{calYear=new Date().getFullYear(); calMonth=new Date().getMonth(); calMode=true; renderCal();};
+    // 미니 달력 이전/다음 월
+    if($("calPrev")) $("calPrev").onclick=()=>{if(calMonth===0){calYear--;calMonth=11;}else calMonth--; render();};
+    if($("calNext")) $("calNext").onclick=()=>{if(calMonth===11){calYear++;calMonth=0;}else calMonth++; render();};
+    // 달력 셀 클릭
+    app.querySelectorAll('.mcc[data-dn]').forEach(el=>{
+      el.onclick=()=>{viewDay=+el.dataset.dn; render(); window.scrollTo({top:0,behavior:'smooth'});};
+    });
+    // 우측 인덱스 드롭다운
+    if($("tidxBook")) $("tidxBook").onchange=ev=>{idxBook=+ev.target.value; idxChapter=1; render();};
+    // 우측 장 선택
+    app.querySelectorAll('.tidx-ch').forEach(btn=>{
+      btn.onclick=()=>{idxChapter=+btn.dataset.ch; indexMode=true; renderIndex();};
+    });
+    // 본문 검색
+    let srchTimer=null;
+    if($("bibleSearch")) $("bibleSearch").oninput=ev=>{
+      clearTimeout(srchTimer);
+      srchTimer=setTimeout(()=>{
+        const q=ev.target.value.trim();
+        const box=$("srchResults"); if(!box) return;
+        if(q.length<2){ box.innerHTML=''; return; }
+        if(!fileBooks){ box.innerHTML='<p style="font-size:12px;color:var(--muted);padding:4px 0">성경 파일을 먼저 불러오세요.</p>'; return; }
+        const hits=searchBible(q);
+        if(!hits.length){ box.innerHTML='<p style="font-size:12px;color:var(--muted);padding:4px 0">검색 결과가 없어요.</p>'; return; }
+        box.innerHTML=hits.map((h,i)=>{
+          const ref=`${BOOKS[h.bi][0]} ${h.ch},${h.v}`;
+          const ql=q.toLowerCase(), tl=h.t.toLowerCase(), idx=tl.indexOf(ql);
+          const snip=idx===-1?h.t:h.t.slice(Math.max(0,idx-20),idx+q.length+40);
+          const hiSnip=snip.replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'),m=>`<b style="color:var(--gold-bright)">${m}</b>`);
+          return `<div class="srch-hit" data-i="${i}"><div class="srch-ref">${ref}</div><div class="srch-txt">${hiSnip}</div></div>`;
+        }).join('');
+        box.querySelectorAll('.srch-hit').forEach((el,i)=>{
+          el.onclick=()=>{idxBook=hits[i].bi; idxChapter=hits[i].ch; indexMode=true; renderIndex();};
+        });
+      },250);
+    };
 
     const ref=fmt(plan[d-1]);
     if($("askGen")) $("askGen").onclick=()=>copyAndOpen(basePrompt(ref)+`
 
 위 지침에 따라 오늘 범위에 대해 ①배경지식(역사·문학적 맥락과 가톨릭 독해 관점)과 ②강론·해설(묵상으로 이끄는 따뜻한 권고)을 각각 정리해 주세요.`);
-    if($("askQ")) $("askQ").onclick=()=>copyAndOpen(basePrompt(ref)+`
-
-위 지침에 따라 아래 질문에 답해 주세요.
-질문: `);
     $("rtime").onchange=ev=>{state.reminderTime=ev.target.value; ls(SK,state);};
 
     const saveNotes=()=>{ notes[d]={bg:$("bg").value, homily:$("homily").value}; ls(NK,notes); };
