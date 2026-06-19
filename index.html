@@ -169,9 +169,32 @@
     ["요한 2서",1],["요한 3서",1],["유다서",1],["요한 묵시록",22]];
 
   const flat=[]; BOOKS.forEach((bc,bi)=>{for(let c=1;c<=bc[1];c++) flat.push([bi,c]);});
-  const DAYS=365, base=Math.floor(flat.length/DAYS), rem=flat.length%DAYS;
-  const plan=[]; let p=0;
-  for(let d=0;d<DAYS;d++){const cnt=base+(d<rem?1:0); plan.push(flat.slice(p,p+cnt)); p+=cnt;}
+  const DAYS=365;
+
+  function buildPlan(w){
+    if(!w){
+      // 절 수 정보 없을 때: 장 수 기준 균등 분배 (fallback)
+      const base=Math.floor(flat.length/DAYS), rem=flat.length%DAYS;
+      const pl=[]; let p=0;
+      for(let d=0;d<DAYS;d++){const cnt=base+(d<rem?1:0); pl.push(flat.slice(p,p+cnt)); p+=cnt;}
+      return pl;
+    }
+    // 절 수 기준 균등 분배
+    const totalV=flat.reduce((s,[bi,c])=>s+((w[bi]&&w[bi][c])||20),0);
+    const target=totalV/DAYS;
+    const pl=[]; let sl=[],sv=0;
+    for(let i=0;i<flat.length;i++){
+      const [bi,c]=flat[i], v=(w[bi]&&w[bi][c])||20;
+      sl.push([bi,c]); sv+=v;
+      const remCh=flat.length-i-1, dl=DAYS-pl.length-1;
+      if(sv>=target&&pl.length<DAYS-1&&remCh>=dl){pl.push(sl);sl=[];sv=0;}
+    }
+    if(sl.length) pl.length<DAYS?pl.push(sl):(pl[DAYS-1]=[...pl[DAYS-1],...sl]);
+    while(pl.length<DAYS) pl.push([]);
+    return pl;
+  }
+
+  let plan=buildPlan(null); // init 이후 절 수 로드되면 재빌드
   function fmt(slice){const g=[]; slice.forEach(([bi,c])=>{const last=g[g.length-1];
     if(last&&last.bi===bi&&c===last.e+1) last.e=c; else g.push({bi,s:c,e:c});});
     return g.map(x=>BOOKS[x.bi][0]+(x.s===x.e?` ${x.s}장`:` ${x.s}–${x.e}장`)).join(" · ");}
@@ -215,6 +238,11 @@
     fileBooks=parseBible(text);
     const ok=await idbSet("bible", text);  // 기기에 저장 (개인 소장본)
     bibleSession=!ok;                      // 저장 실패 시 이번 세션만 유지
+    // 장별 절 수 계산 → 절 수 기준 plan 재빌드
+    const w={};
+    fileBooks.forEach((bk,bi)=>{ w[bi]={}; Object.entries(bk.chapters).forEach(([ch,vs])=>{ w[bi][+ch]=vs.length; }); });
+    ls('tg_plan_w', w);
+    plan=buildPlan(w);
   }
 
   // ---- 상태 ----
@@ -743,6 +771,8 @@
     const en=lg(EK); if(en) entries=en;
     const n=lg(NK); if(n) notes=n;
     const ai=lg(AK); if(ai) aiCache=ai;
+    // 절 수 가중치 로드 → plan 재빌드 (성경 파일 불러온 이후라면)
+    const pw=lg('tg_plan_w'); if(pw) plan=buildPlan(pw);
     // 마이그레이션: startDate / completedDates 필드 보강
     if(!state.startDate) state.startDate=toDateStr(new Date());
     if(!state.completedDates) state.completedDates={};
