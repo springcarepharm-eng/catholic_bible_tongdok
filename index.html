@@ -99,6 +99,22 @@
 
   .foot{color:var(--muted-2); font-size:11px; text-align:center; margin-top:20px; line-height:1.7}
   .loading{color:var(--muted); text-align:center; padding:60px 0}
+  /* 달력 */
+  .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:3px}
+  .cal-hd{text-align:center; font-size:11px; color:var(--muted); padding:4px 0; font-weight:600}
+  .cal-cell{min-height:44px; border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:default; position:relative; background:rgba(0,0,0,.12)}
+  .cal-cell[data-daynum]{cursor:pointer; background:rgba(236,230,216,.07)}
+  .cal-cell[data-daynum]:hover{background:rgba(236,230,216,.16)}
+  .cal-empty{background:transparent!important}
+  .cal-day{font-size:13px; line-height:1}
+  .cal-today{outline:2px solid var(--gold); outline-offset:-2px}
+  .cal-done .cal-day{color:var(--gold); font-weight:700}
+  .cal-check{font-size:10px; color:var(--gold); line-height:1; margin-top:1px}
+  .cal-missed .cal-day{color:var(--muted)}
+  .cal-dot{width:5px; height:5px; border-radius:50%; background:#e06060; margin-top:2px}
+  .cal-dot-inline{display:inline-block; width:7px; height:7px; border-radius:50%; background:#e06060; vertical-align:middle}
+  /* 인덱스 */
+  .idx-ch-sel{background:var(--gold)!important; color:#1a1710!important}
   @media (max-width:760px){ .grid{grid-template-columns:1fr} .passage{max-height:62vh} }
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -106,6 +122,7 @@
 <body>
 <div id="app"><div class="loading">노트를 펼치는 중…</div></div>
 <input type="file" id="filein" accept=".txt,text/plain" style="display:none">
+<input type="file" id="backupin" accept=".json,application/json" style="display:none">
 
 <script>
 (function(){
@@ -172,10 +189,60 @@
 
   // ---- 상태 ----
   const SK="tg_state", EK="tg_entries", NK="tg_notes";
-  let state={reminderTime:"22:00",completed:[]}, entries={}, notes={};
+  let state={reminderTime:"22:00",completed:[],startDate:null,completedDates:{}}, entries={}, notes={};
   let viewDay=1;
+  const toDateStr=d=>d.toISOString().slice(0,10);
   const isDone=d=>state.completed.includes(d);
   const currentDay=()=>{for(let d=1;d<=DAYS;d++) if(!isDone(d)) return d; return DAYS;};
+
+  // ---- 백업 / 복원 ----
+  function downloadBackup(){
+    const payload={app:"bam-tongdok",version:1,exportedAt:new Date().toISOString(),state,entries,notes};
+    const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+    const yyyymmdd=toDateStr(new Date()).replace(/-/g,"");
+    const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+    a.download=`bam-tongdok-backup-${yyyymmdd}.json`; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  }
+
+  function mergeBackup(raw){
+    let parsed;
+    try{ parsed=JSON.parse(raw); }catch(e){ alert("파일을 읽지 못했어요. JSON 형식인지 확인해 주세요."); return; }
+    if(parsed.app!=="bam-tongdok"||!parsed.version){ alert("밤의 통독 백업 파일이 아니에요."); return; }
+    const ok=confirm("현재 기록과 합칠까요?\n(두 기기의 진도·묵상이 모두 보존됩니다)");
+    if(!ok) return;
+    const bs=parsed.state||{}, be=parsed.entries||{}, bn=parsed.notes||{};
+    // completed 합집합
+    const merged=new Set([...state.completed,...(bs.completed||[])]);
+    state.completed=[...merged].sort((a,b)=>a-b);
+    // completedDates 병합: 충돌 시 더 이른 날짜 유지
+    const bcd=bs.completedDates||{};
+    Object.keys(bcd).forEach(k=>{
+      if(!state.completedDates[k]||bcd[k]<state.completedDates[k]) state.completedDates[k]=bcd[k];
+    });
+    // startDate: 더 이른 쪽
+    if(bs.startDate&&(!state.startDate||bs.startDate<state.startDate)) state.startDate=bs.startDate;
+    ls(SK,state);
+    // entries 병합: savedAt 기준 최신
+    Object.keys(be).forEach(k=>{
+      if(!entries[k]||(be[k].savedAt&&(!entries[k].savedAt||be[k].savedAt>entries[k].savedAt))) entries[k]=be[k];
+    });
+    ls(EK,entries);
+    // notes 병합: entries savedAt 기준 최신 (notes에 savedAt 없으므로 entries 기준)
+    Object.keys(bn).forEach(k=>{
+      if(!notes[k]||(entries[k]&&be[k]&&be[k].savedAt&&(!entries[k].savedAt||be[k].savedAt>=entries[k].savedAt))) notes[k]=bn[k];
+    });
+    ls(NK,notes);
+    render();
+    alert("복원 완료! 진도와 묵상이 합쳐졌어요.");
+  }
+
+  const backupin=document.getElementById("backupin");
+  backupin.onchange=ev=>{
+    const f=ev.target.files[0]; if(!f) return;
+    const reader=new FileReader(); reader.onload=e=>mergeBackup(e.target.result); reader.readAsText(f);
+    backupin.value="";
+  };
 
   function downloadICS(){
     const [hh,mm]=state.reminderTime.split(":"); const t=new Date();
@@ -212,6 +279,7 @@
 
   const app=document.getElementById("app"), filein=document.getElementById("filein");
   const $=id=>document.getElementById(id);
+  let indexMode=false, idxBook=0, idxChapter=1;
   filein.onchange=async ev=>{ const f=ev.target.files[0]; if(!f) return;
     try{ await readFile(f);}catch(e){ alert("파일을 읽지 못했어요. .txt 형식인지 확인해 주세요."); }
     filein.value=""; render(); };
@@ -232,7 +300,109 @@
     return html;
   }
 
+  function renderIndex(){
+    const bk=BOOKS[idxBook], totalCh=bk[1];
+    const chBtns=Array.from({length:totalCh},(_,i)=>{
+      const ch=i+1;
+      return `<button class="btn btn-sm idx-ch${ch===idxChapter?' idx-ch-sel':''}" data-ch="${ch}">${ch}</button>`;
+    }).join("");
+    let passHtml="";
+    if(!fileBooks){
+      passHtml=`<div class="load-prompt"><p>본문을 보려면 성경 텍스트 파일(.txt)을 한 번 불러오세요.</p>
+        <button class="btn btn-gold" id="idxLoadBtn">📖 성경 파일 불러오기</button></div>`;
+    } else {
+      const fb=fileBooks[idxBook], vs=fb&&fb.chapters[idxChapter];
+      if(!vs){ passHtml=`<p class="vmiss">이 장을 파일에서 찾지 못했어요.</p>`; }
+      else { passHtml='<div class="verses">'+vs.map(o=>`<p class="v"><span class="vn">${o.v}</span>${esc(o.t)}</p>`).join("")+'</div>'; }
+    }
+    app.innerHTML=`
+      <p class="eyebrow">밤의 통독 · 성경 찾아보기</p>
+      <div class="navrow" style="margin-bottom:14px">
+        <button class="btn btn-sm btn-ghost" id="idxBack">← 통독으로 돌아가기</button>
+      </div>
+      <div class="panel" style="margin-bottom:10px">
+        <h3>책 선택</h3>
+        <select id="idxBookSel" style="width:100%;padding:8px;background:var(--surface);color:var(--fg);border:1px solid rgba(236,230,216,.2);border-radius:8px;font-size:1rem;margin-top:4px">
+          ${BOOKS.map((b,i)=>`<option value="${i}"${i===idxBook?' selected':''}>${b[0]}</option>`).join("")}
+        </select>
+      </div>
+      <div class="panel" style="margin-bottom:10px">
+        <h3>${bk[0]} — 장 선택</h3>
+        <div class="idx-ch-grid" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">${chBtns}</div>
+      </div>
+      <div class="panel">
+        <h3>${bk[0]} ${idxChapter}장</h3>
+        ${passHtml}
+      </div>
+      <p class="foot">이 보기는 진도·완료에 영향을 주지 않아요.</p>
+    `;
+    // bind
+    $("idxBack").onclick=()=>{indexMode=false; render();};
+    if($("idxLoadBtn")) $("idxLoadBtn").onclick=pickFile;
+    $("idxBookSel").onchange=ev=>{idxBook=+ev.target.value; idxChapter=1; renderIndex();};
+    app.querySelectorAll(".idx-ch").forEach(btn=>{
+      btn.onclick=()=>{idxChapter=+btn.dataset.ch; renderIndex();};
+    });
+  }
+
+  let calMode=false, calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
+
+  function renderCal(){
+    const dateToDay={};
+    Object.entries(state.completedDates||{}).forEach(([d,dt])=>{ dateToDay[dt]=+d; });
+    const today=toDateStr(new Date());
+    const startDate=state.startDate||today;
+    const firstDow=new Date(calYear,calMonth,1).getDay();
+    const lastDate=new Date(calYear,calMonth+1,0).getDate();
+    const startY=+startDate.slice(0,4), startM=+startDate.slice(5,7)-1;
+    const todayY=new Date().getFullYear(), todayM=new Date().getMonth();
+    const canPrev=calYear>startY||(calYear===startY&&calMonth>startM);
+    const canNext=calYear<todayY||(calYear===todayY&&calMonth<todayM);
+    const DOW=['일','월','화','수','목','금','토'];
+    const MNAMES=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+    let cells='';
+    for(let i=0;i<firstDow;i++) cells+='<div class="cal-cell cal-empty"></div>';
+    for(let day=1;day<=lastDate;day++){
+      const ds=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      const dn=dateToDay[ds];
+      const isToday=ds===today;
+      const isMissed=ds>=startDate&&ds<today&&!dn;
+      let cls='cal-cell'+(isToday?' cal-today':'')+(dn?' cal-done':isMissed?' cal-missed':'');
+      const inner=dn?`<span class="cal-day">${day}</span><span class="cal-check">✓</span>`
+        :isMissed?`<span class="cal-day">${day}</span><div class="cal-dot"></div>`
+        :`<span class="cal-day">${day}</span>`;
+      cells+=`<div class="${cls}"${dn?` data-daynum="${dn}"`:''}>${inner}</div>`;
+    }
+    app.innerHTML=`
+      <p class="eyebrow">밤의 통독 · 달력</p>
+      <div class="navrow" style="margin-bottom:14px">
+        <button class="btn btn-sm btn-ghost" id="calBack">← 통독으로 돌아가기</button>
+      </div>
+      <div class="panel">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <button class="btn btn-sm" id="calPrev" ${!canPrev?'disabled':''}>←</button>
+          <span style="font-size:1.1rem;font-weight:600">${calYear}년 ${MNAMES[calMonth]}</span>
+          <button class="btn btn-sm" id="calNext" ${!canNext?'disabled':''}>→</button>
+        </div>
+        <div class="cal-grid">
+          ${DOW.map(d=>`<div class="cal-hd">${d}</div>`).join('')}
+          ${cells}
+        </div>
+        <p class="hint" style="margin-top:12px;padding-left:0"><span style="color:var(--gold)">✓</span> 완료 &nbsp;·&nbsp; <span class="cal-dot-inline"></span> 미완료 &nbsp;·&nbsp; 완료된 날짜를 탭하면 그날 묵상을 볼 수 있어요.</p>
+      </div>
+      <p class="foot">밤의 통독 · 본문은 기기에만 보관 · 매일 밤, 한 장씩.</p>
+    `;
+    $('calBack').onclick=()=>{calMode=false; render();};
+    $('calPrev').onclick=()=>{if(calMonth===0){calYear--;calMonth=11;}else calMonth--; renderCal();};
+    $('calNext').onclick=()=>{if(calMonth===11){calYear++;calMonth=0;}else calMonth++; renderCal();};
+    app.querySelectorAll('.cal-cell[data-daynum]').forEach(el=>{
+      el.onclick=()=>{calMode=false; viewDay=+el.dataset.daynum; render(); window.scrollTo({top:0,behavior:'smooth'});};
+    });
+  }
+
   function render(){
+    if(indexMode){ renderIndex(); return; }
+    if(calMode){ renderCal(); return; }
     const cur=currentDay(), done=state.completed.length, pct=done/DAYS;
     const R=31,C=2*Math.PI*R,off=C*(1-pct), d=viewDay, slice=plan[d-1];
     const e=entries[d]||{med:"",verse:""}, nt=notes[d]||{bg:"",homily:""};
@@ -253,7 +423,8 @@
         </div>
         <div class="top-actions">
           <button class="btn btn-sm" id="loadBtn">📖 성경 파일</button>
-          <button class="btn btn-sm" id="icsBtn">📅 매일 알림</button>
+          <button class="btn btn-sm" id="calOpenBtn">📅 달력</button>
+          <button class="btn btn-sm" id="icsBtn">🔔 매일 알림</button>
         </div>
       </div>
 
@@ -263,6 +434,7 @@
         <button class="btn btn-sm" id="prev" ${d<=1?'disabled':''}>←</button>
         <button class="btn btn-sm btn-ghost" id="today">오늘</button>
         <button class="btn btn-sm" id="next" ${d>=DAYS?'disabled':''}>→</button>
+        <button class="btn btn-sm btn-ghost" id="idxOpenBtn" title="책·장 찾아보기">📖</button>
       </div>
 
       <div class="grid">
@@ -310,6 +482,15 @@
       </div>
 
       <div class="panel" style="margin-top:14px">
+        <h3>백업</h3>
+        <div class="reminder-row" style="margin-top:6px">
+          <button class="btn btn-sm" id="exportBtn">💾 내보내기</button>
+          <button class="btn btn-sm" id="importBtn">📂 불러오기</button>
+        </div>
+        <p class="hint">진도·묵상을 파일로 저장하거나 다른 기기에서 불러와요. <b>성경 본문은 포함되지 않아요</b> (용량·저작권).</p>
+      </div>
+
+      <div class="panel" style="margin-top:14px">
         <h3>읽기 알림 시각</h3>
         <div class="reminder-row">
           <div><label class="fld" for="rtime" style="padding-left:0">시각</label>
@@ -334,9 +515,13 @@
   function bind(d){
     $("loadBtn").onclick=pickFile; if($("loadBtn2")) $("loadBtn2").onclick=pickFile;
     $("icsBtn").onclick=downloadICS; if($("icsBtn2")) $("icsBtn2").onclick=downloadICS;
+    if($("exportBtn")) $("exportBtn").onclick=downloadBackup;
+    if($("importBtn")) $("importBtn").onclick=()=>backupin.click();
     $("prev").onclick=()=>{if(d>1){viewDay=d-1;render();}};
     $("next").onclick=()=>{if(d<DAYS){viewDay=d+1;render();}};
     $("today").onclick=()=>{viewDay=currentDay();render();};
+    if($("idxOpenBtn")) $("idxOpenBtn").onclick=()=>{indexMode=true; renderIndex();};
+    if($("calOpenBtn")) $("calOpenBtn").onclick=()=>{calYear=new Date().getFullYear(); calMonth=new Date().getMonth(); calMode=true; renderCal();};
 
     const ref=fmt(plan[d-1]);
     if($("askGen")) $("askGen").onclick=()=>copyAndOpen(basePrompt(ref)+`
@@ -355,11 +540,11 @@
       entries[d]={med:$("med").value, verse:$("verse").value, savedAt:new Date().toISOString()};
       ls(EK,entries);
       notes[d]={bg:$("bg").value, homily:$("homily").value}; ls(NK,notes);
-      if(!isDone(d)){state.completed.push(d); ls(SK,state);}
+      if(!isDone(d)){state.completed.push(d); state.completedDates[d]=toDateStr(new Date()); ls(SK,state);}
       const fl=$("flag"); fl.classList.add("show"); setTimeout(()=>fl.classList.remove("show"),1500);
       if(viewDay===d) viewDay=isDone(d)?d:currentDay(); render();
     };
-    if($("undo")) $("undo").onclick=()=>{state.completed=state.completed.filter(x=>x!==d); ls(SK,state); render();};
+    if($("undo")) $("undo").onclick=()=>{state.completed=state.completed.filter(x=>x!==d); delete state.completedDates[d]; ls(SK,state); render();};
   }
 
   function renderHist(){
@@ -378,6 +563,16 @@
     const s=lg(SK); if(s) state=s;
     const en=lg(EK); if(en) entries=en;
     const n=lg(NK); if(n) notes=n;
+    // 마이그레이션: startDate / completedDates 필드 보강
+    if(!state.startDate) state.startDate=toDateStr(new Date());
+    if(!state.completedDates) state.completedDates={};
+    state.completed.forEach(d=>{
+      if(!state.completedDates[d]){
+        const savedAt=entries[d]&&entries[d].savedAt;
+        state.completedDates[d]=savedAt?savedAt.slice(0,10):state.startDate;
+      }
+    });
+    ls(SK,state);
     viewDay=currentDay(); render();              // 먼저 화면을 그리고
     try{ const raw=await idbGet("bible");         // 저장해 둔 본문을 불러와 다시 그림
       if(raw){ fileBooks=parseBible(raw); render(); } }catch(e){}
