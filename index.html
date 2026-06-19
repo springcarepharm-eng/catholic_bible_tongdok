@@ -112,6 +112,17 @@
   textarea#med{min-height:260px}
   textarea.ai{min-height:90px; font-size:13.5px; color:#ddd6c6; line-height:1.7}
   #bg{min-height:220px} #homily{min-height:178px}
+  .ai-view{min-height:120px;font-size:13.5px;color:#ddd6c6;line-height:1.8;padding:2px 0}
+  .ai-view h3,.ai-view h4{color:#c9b96e;margin:12px 0 4px;font-size:14px}
+  .ai-view strong{color:#e8d48a}
+  .ai-view blockquote{border-left:3px solid #c9b96e;padding-left:10px;color:#aaa8;margin:6px 0}
+  .ai-view table{border-collapse:collapse;width:100%;font-size:12.5px;margin:8px 0}
+  .ai-view th,.ai-view td{border:1px solid #3a3a5a;padding:5px 8px;text-align:left}
+  .ai-view th{background:#1e2140;color:#c9b96e}
+  .ai-view ul,.ai-view ol{padding-left:18px;margin:4px 0}
+  .ai-view li{margin:3px 0}
+  .ai-view p{margin:6px 0}
+  .ai-edit-btn{font-size:11px;padding:2px 8px;opacity:0.6;float:right;margin-top:-2px}
   #verse{font-family:'Noto Serif KR',serif}
 
   .savebar{display:flex; align-items:center; gap:10px; margin-top:12px; padding-left:8px}
@@ -143,6 +154,7 @@
   }
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
 <div id="app"><div class="loading">노트를 펼치는 중…</div></div>
@@ -354,13 +366,39 @@
       if (!notes[d].homily) { notes[d].homily = homily; ls(NK, notes); }
       if (viewDay === d) {
         const bgEl2 = document.getElementById("bg"), hmEl2 = document.getElementById("homily");
-        if (bgEl2 && !bgEl2.value) { bgEl2.value = bg; bgEl2.placeholder = "배경지식"; }
-        if (hmEl2 && !hmEl2.value) { hmEl2.value = homily; hmEl2.placeholder = "강론·해설"; }
+        if (bgEl2 && !bgEl2.value) { bgEl2.value = bg; bgEl2.placeholder = "배경지식"; renderAI('bg'); }
+        if (hmEl2 && !hmEl2.value) { hmEl2.value = homily; hmEl2.placeholder = "강론·해설"; renderAI('homily'); }
       }
     } catch(e) { console.error("fetchDayAI error:", e); }
     aiFetching.delete(d);
   }
   function maybeAutoFetch(d) { if (!aiCache[d]) fetchDayAI(d); }
+
+  function renderAI(id) {
+    const ta = document.getElementById(id);
+    const view = document.getElementById(id+'-view');
+    if (!ta || !view) return;
+    if (ta.value.trim()) {
+      view.innerHTML = (typeof marked !== 'undefined') ? marked.parse(ta.value) : ta.value.replace(/\n/g,'<br>');
+    } else {
+      view.innerHTML = '<span style="color:#555">'+ta.placeholder+'</span>';
+    }
+  }
+  function toggleAIEdit(id) {
+    const ta = document.getElementById(id);
+    const view = document.getElementById(id+'-view');
+    const btn = document.getElementById(id+'-edit-btn');
+    if (!ta || !view) return;
+    if (ta.style.display === 'none') {
+      view.style.display = 'none'; ta.style.display = ''; ta.focus();
+      if (btn) btn.textContent = '완료';
+    } else {
+      const saveNotesFn = window._saveNotes;
+      if (saveNotesFn) saveNotesFn();
+      ta.style.display = 'none'; renderAI(id); view.style.display = '';
+      if (btn) btn.textContent = '편집';
+    }
+  }
 
   const app=document.getElementById("app"), filein=document.getElementById("filein");
   const $=id=>document.getElementById(id);
@@ -572,14 +610,16 @@
       <div class="grid" style="margin-top:14px">
         <div class="col">
           <div class="panel">
-            <h3>배경지식 <span class="tag">${aiCache[d]?'AI 받음':'AI 자동 받기'}</span></h3>
-            <textarea class="ai" id="bg" placeholder="${!aiCache[d]?'잠시 후 AI가 채워드려요…':'배경지식'}">${esc((nt.bg||(aiCache[d]&&aiCache[d].bg)||""))}</textarea>
+            <h3>배경지식 <span class="tag">${aiCache[d]?'AI 받음':'AI 자동 받기'}</span><button class="btn btn-sm ai-edit-btn" id="bg-edit-btn" onclick="toggleAIEdit('bg')">편집</button></h3>
+            <div class="ai-view" id="bg-view"></div>
+            <textarea class="ai" id="bg" style="display:none" placeholder="${!aiCache[d]?'잠시 후 AI가 채워드려요…':'배경지식'}">${esc((nt.bg||(aiCache[d]&&aiCache[d].bg)||""))}</textarea>
           </div>
         </div>
         <div class="col">
           <div class="panel">
-            <h3>강론 · 해설 <span class="tag">${aiCache[d]?'AI 받음':'AI 자동 받기'}</span></h3>
-            <textarea class="ai" id="homily" placeholder="${!aiCache[d]?'잠시 후 AI가 채워드려요…':'강론·해설'}">${esc((nt.homily||(aiCache[d]&&aiCache[d].homily)||""))}</textarea>
+            <h3>강론 · 해설 <span class="tag">${aiCache[d]?'AI 받음':'AI 자동 받기'}</span><button class="btn btn-sm ai-edit-btn" id="homily-edit-btn" onclick="toggleAIEdit('homily')">편집</button></h3>
+            <div class="ai-view" id="homily-view"></div>
+            <textarea class="ai" id="homily" style="display:none" placeholder="${!aiCache[d]?'잠시 후 AI가 채워드려요…':'강론·해설'}">${esc((nt.homily||(aiCache[d]&&aiCache[d].homily)||""))}</textarea>
             <div style="margin-top:10px;display:flex;align-items:center;gap:10px">
               <button class="btn btn-sm" id="askMore">✦ 오늘 말씀 더 알아보기</button>
               <span class="saved-flag" id="copyflag" style="padding-left:0">복사됐어요 ✓</span>
@@ -671,7 +711,9 @@
     $("rtime").onchange=ev=>{state.reminderTime=ev.target.value; ls(SK,state);};
 
     const saveNotes=()=>{ notes[d]={bg:$("bg").value, homily:$("homily").value}; ls(NK,notes); };
+    window._saveNotes = saveNotes;
     $("bg").onblur=saveNotes; $("homily").onblur=saveNotes;
+    renderAI('bg'); renderAI('homily');
 
     $("save").onclick=()=>{
       entries[d]={med:$("med").value, verse:$("verse").value, savedAt:new Date().toISOString()};
