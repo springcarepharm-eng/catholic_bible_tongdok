@@ -112,7 +112,8 @@
   textarea#med{min-height:260px}
   textarea.ai{min-height:90px; font-size:13.5px; color:#ddd6c6; line-height:1.7}
   #bg{min-height:220px} #homily{min-height:178px}
-  .ai-view{min-height:120px;font-size:13.5px;color:#ddd6c6;line-height:1.8;padding:2px 0}
+  .ai-view{min-height:120px;font-size:13.5px;color:#ddd6c6;line-height:1.8;padding:2px 0;cursor:text}
+  #bg-view{min-height:220px} #homily-view{min-height:178px}
   .ai-view h3,.ai-view h4{color:#c9b96e;margin:12px 0 4px;font-size:14px}
   .ai-view strong{color:#e8d48a}
   .ai-view blockquote{border-left:3px solid #c9b96e;padding-left:10px;color:#aaa8;margin:6px 0}
@@ -381,8 +382,9 @@
     if (ta.value.trim()) {
       view.innerHTML = (typeof marked !== 'undefined') ? marked.parse(ta.value) : ta.value.replace(/\n/g,'<br>');
     } else {
-      view.innerHTML = '<span style="color:#555">'+ta.placeholder+'</span>';
+      view.innerHTML = '<span style="color:#555;font-style:italic">'+ta.placeholder+'</span>';
     }
+    view.onclick = () => toggleAIEdit(id);
   }
   function toggleAIEdit(id) {
     const ta = document.getElementById(id);
@@ -393,9 +395,8 @@
       view.style.display = 'none'; ta.style.display = ''; ta.focus();
       if (btn) btn.textContent = '완료';
     } else {
-      const saveNotesFn = window._saveNotes;
-      if (saveNotesFn) saveNotesFn();
-      ta.style.display = 'none'; renderAI(id); view.style.display = '';
+      if (window._saveNotes) window._saveNotes();
+      ta.style.display = 'none'; view.style.display = ''; renderAI(id);
       if (btn) btn.textContent = '편집';
     }
   }
@@ -739,7 +740,35 @@
   }
 
   // ---- 시작 ----
+  const APP_PIN = "0507";
+  function checkPin() {
+    if (sessionStorage.getItem('tg_pin_ok') === '1') return;
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:#0d0f1e;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:16px';
+    overlay.innerHTML = `<div style="color:#c9b96e;font-size:22px;font-weight:700">🕯 밤의 통독</div>
+      <div style="color:#aaa;font-size:14px">PIN을 입력해 주세요</div>
+      <input id="pinInput" type="password" inputmode="numeric" maxlength="8" style="font-size:24px;text-align:center;width:140px;padding:10px;border-radius:10px;border:1px solid #3a3a5a;background:#1a1c2e;color:#fff;letter-spacing:6px" placeholder="••••">
+      <div id="pinErr" style="color:#e07a5f;font-size:13px;min-height:18px"></div>`;
+    document.body.appendChild(overlay);
+    const inp = overlay.querySelector('#pinInput');
+    inp.focus();
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Enter') tryPin();
+    });
+    inp.addEventListener('input', () => { if (inp.value.length >= 4) tryPin(); });
+    function tryPin() {
+      if (inp.value === APP_PIN) {
+        sessionStorage.setItem('tg_pin_ok', '1');
+        overlay.remove();
+      } else if (inp.value.length >= APP_PIN.length) {
+        overlay.querySelector('#pinErr').textContent = '핀 번호가 틀렸어요';
+        inp.value = '';
+      }
+    }
+  }
+
   (async function init(){
+    checkPin();
     const s=lg(SK); if(s) state={...{reminderTime:"22:00",completed:[],startDate:null,completedDates:{},claudeApiKey:""},...s};
     const en=lg(EK); if(en) entries=en;
     const n=lg(NK); if(n) notes=n;
