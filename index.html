@@ -109,7 +109,7 @@
   textarea,input[type=text],input[type=time]{width:calc(100% - 8px); margin-left:8px; font-family:inherit; color:var(--ink); font-size:14px; background:rgba(0,0,0,.22); border:1px solid var(--line); border-radius:11px; padding:11px 12px; resize:vertical; line-height:1.6}
   textarea:focus,input:focus{outline:none; border-color:var(--gold)}
   textarea::placeholder,input::placeholder{color:var(--muted-2)}
-  textarea#med{min-height:120px}
+  textarea#med{min-height:260px}
   textarea.ai{min-height:90px; font-size:13.5px; color:#ddd6c6; line-height:1.7}
   #verse{font-family:'Noto Serif KR',serif}
 
@@ -545,10 +545,6 @@
               ${isDone(d)?'<button class="btn btn-ghost btn-sm" id="undo">읽음 취소</button>':''}
               <span class="saved-flag" id="flag">저장됨 ✓</span>
             </div>
-            <div style="padding-left:8px;margin-top:10px;display:flex;align-items:center;gap:10px">
-              <button class="btn btn-sm" id="askGen" title="프롬프트 복사 후 Claude 새 대화 열기">✦ 오늘 배경·강론 받기</button>
-              <span class="saved-flag" id="copyflag" style="padding-left:0">복사됐어요 ✓</span>
-            </div>
           </div>
         </div>
       </div>
@@ -565,6 +561,10 @@
           <div class="panel">
             <h3>강론 · 해설 <span class="tag">${aiCache[d]?'AI 받음':'AI 자동 받기'}</span></h3>
             <textarea class="ai" id="homily" placeholder="${!aiCache[d]?'잠시 후 AI가 채워드려요…':'강론·해설'}">${esc((nt.homily||(aiCache[d]&&aiCache[d].homily)||""))}</textarea>
+            <div style="margin-top:10px;display:flex;align-items:center;gap:10px">
+              <button class="btn btn-sm" id="askMore">✦ 오늘 말씀 더 알아보기</button>
+              <span class="saved-flag" id="copyflag" style="padding-left:0">복사됐어요 ✓</span>
+            </div>
           </div>
         </div>
       </div>
@@ -646,9 +646,9 @@
     };
 
     const ref=fmt(plan[d-1]);
-    if($("askGen")) $("askGen").onclick=()=>copyAndOpen(basePrompt(ref)+`
+    if($("askMore")) $("askMore").onclick=()=>copyAndOpen(basePrompt(ref)+`
 
-위 지침에 따라 오늘 범위에 대해 ①배경지식(역사·문학적 맥락과 가톨릭 독해 관점)과 ②강론·해설(묵상으로 이끄는 따뜻한 권고)을 각각 정리해 주세요.`);
+오늘 배경지식과 강론을 읽었습니다. 이 본문에 대해 더 깊이 이야기 나누고 싶어요. 궁금한 점이나 묵상을 도와주세요.`);
     $("rtime").onchange=ev=>{state.reminderTime=ev.target.value; ls(SK,state);};
 
     const saveNotes=()=>{ notes[d]={bg:$("bg").value, homily:$("homily").value}; ls(NK,notes); };
