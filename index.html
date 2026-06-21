@@ -252,6 +252,15 @@
   const toDateStr=d=>new Date(d.getTime()+9*60*60*1000).toISOString().slice(0,10);
   const isDone=d=>state.completed.includes(d);
   const currentDay=()=>{for(let d=1;d<=DAYS;d++) if(!isDone(d)) return d; return DAYS;};
+  const todayDay=()=>{
+    if(!state.startDate) return currentDay();
+    const startMs=new Date(state.startDate+'T00:00:00+09:00').getTime();
+    const nowKST=new Date(Date.now()+9*60*60*1000);
+    const todayStr=nowKST.toISOString().slice(0,10);
+    const todayMs=new Date(todayStr+'T00:00:00+09:00').getTime();
+    const diff=Math.round((todayMs-startMs)/86400000);
+    return Math.min(Math.max(diff+1,1),DAYS);
+  };
 
   // ---- 백업 / 복원 ----
   function downloadBackup(){
@@ -544,7 +553,7 @@
 
   function render(){
     if(indexMode){ renderIndex(); return; }
-    const cur=currentDay(), done=state.completed.length, pct=done/DAYS;
+    const cur=todayDay(), done=state.completed.length, pct=done/DAYS;
     const R=35,C=2*Math.PI*R,off=C*(1-pct), d=viewDay, slice=plan[d-1];
     const e=entries[d]||{med:"",verse:""}, nt=notes[d]||{bg:"",homily:""};
 
@@ -665,7 +674,7 @@
     if($("importBtn")) $("importBtn").onclick=()=>backupin.click();
     $("prev").onclick=()=>{if(d>1){viewDay=d-1;render();}};
     $("next").onclick=()=>{if(d<DAYS){viewDay=d+1;render();}};
-    $("today").onclick=()=>{viewDay=currentDay();render();};
+    $("today").onclick=()=>{viewDay=todayDay();render();};
     // 미니 달력 이전/다음 월
     if($("calPrev")) $("calPrev").onclick=()=>{if(calMonth===0){calYear--;calMonth=11;}else calMonth--; render();};
     if($("calNext")) $("calNext").onclick=()=>{if(calMonth===11){calYear++;calMonth=0;}else calMonth++; render();};
@@ -721,7 +730,7 @@
       syncToDB('save_note',{day:d,bg:notes[d].bg,homily:notes[d].homily});
       syncToDB('save_state',{completed:state.completed,completed_dates:state.completedDates,start_date:state.startDate,reminder_time:state.reminderTime});
       const fl=$("flag"); fl.classList.add("show"); setTimeout(()=>fl.classList.remove("show"),1500);
-      if(viewDay===d) viewDay=isDone(d)?d:currentDay(); render();
+      if(viewDay===d) viewDay=isDone(d)?d:todayDay(); render();
     };
     if($("undo")) $("undo").onclick=()=>{state.completed=state.completed.filter(x=>x!==d); delete state.completedDates[d]; ls(SK,state); render();};
     maybeAutoFetch(d);
@@ -822,7 +831,7 @@
       }
     });
     ls(SK,state);
-    viewDay=currentDay(); render();
+    viewDay=todayDay(); render();
     const userId=sessionStorage.getItem('tg_profile');
     try{
       const r=await fetch('/api/db',{method:'POST',headers:{'content-type':'application/json','x-app-pin':sessionStorage.getItem('tg_pin')||''},body:JSON.stringify({action:'load',user_id:userId})});
@@ -838,7 +847,7 @@
           if(ds){state={...state,completed:ds.completed||[],completedDates:ds.completed_dates||{},startDate:ds.start_date||state.startDate,reminderTime:ds.reminder_time||state.reminderTime};ls(SK,state);}
           if(de&&de.length){de.forEach(e=>{entries[e.day]={med:e.med||'',verse:e.verse||'',savedAt:e.saved_at||''};});ls(EK,entries);}
           if(dn&&dn.length){dn.forEach(n=>{notes[n.day]={bg:n.bg||'',homily:n.homily||''};});ls(NK,notes);}
-          viewDay=currentDay(); render();
+          viewDay=todayDay(); render();
         }
       }
     }catch(e){}
