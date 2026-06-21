@@ -329,7 +329,7 @@
   function openClaude(){ try{ window.open("https://claude.ai/new","_blank"); }catch(e){ location.href="https://claude.ai/new"; } }
   function copyAndOpen(text){
     const flag=$("copyflag");
-    const after=()=>{ if(flag){flag.classList.add("show"); setTimeout(()=>flag.classList.remove("show"),3000);} setTimeout(openClaude,200); };
+    const after=()=>{ if(flag){flag.classList.add("show"); setTimeout(()=>flag.classList.remove("show"),5000);} setTimeout(openClaude,200); };
     if(navigator.clipboard&&navigator.clipboard.writeText){
       navigator.clipboard.writeText(text).then(after).catch(()=>{ window.prompt("이 프롬프트를 복사한 뒤 Claude 새 대화에 붙여넣으세요:",text); openClaude(); });
     } else { window.prompt("이 프롬프트를 복사한 뒤 Claude 새 대화에 붙여넣으세요:",text); openClaude(); }
@@ -621,7 +621,7 @@
             <textarea class="ai" id="homily" placeholder="${!aiCache[d]?'잠시 후 AI가 채워드려요…':'강론·해설'}">${esc((nt.homily||(aiCache[d]&&aiCache[d].homily)||""))}</textarea>
             <div style="margin-top:10px;display:flex;align-items:center;gap:10px">
               <button class="btn btn-sm" id="askMore">✦ 오늘 말씀 더 알아보기</button>
-              <span class="saved-flag" id="copyflag" style="padding-left:0">복사됐어요 ✓</span>
+              <span class="saved-flag" id="copyflag" style="padding-left:0; font-size:13px">📋 맥락이 복사됐어요 — Claude 대화창에 붙여넣기 후 시작하세요</span>
             </div>
           </div>
         </div>
@@ -704,9 +704,7 @@
     };
 
     const ref=fmt(plan[d-1]);
-    if($("askMore")) $("askMore").onclick=()=>copyAndOpen(basePrompt(ref)+`
-
-오늘 배경지식과 강론을 읽었습니다. 이 본문에 대해 더 깊이 이야기 나누고 싶어요. 궁금한 점이나 묵상을 도와주세요.`);
+    if($("askMore")) $("askMore").onclick=()=>copyAndOpen(basePrompt(ref));
     $("rtime").onchange=ev=>{state.reminderTime=ev.target.value; ls(SK,state);};
 
     const saveNotes=()=>{ notes[d]={bg:$("bg").value, homily:$("homily").value}; ls(NK,notes); };
