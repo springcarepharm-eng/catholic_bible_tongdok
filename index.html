@@ -705,9 +705,9 @@
 
     const ref=fmt(plan[d-1]);
     if($("askMore")) $("askMore").onclick=()=>copyAndOpen(basePrompt(ref));
-    $("rtime").onchange=ev=>{state.reminderTime=ev.target.value; ls(SK,state);};
+    $("rtime").onchange=ev=>{state.reminderTime=ev.target.value; ls(SK,state); syncToDB('save_state',{completed:state.completed,completed_dates:state.completedDates,start_date:state.startDate,reminder_time:state.reminderTime});};
 
-    const saveNotes=()=>{ notes[d]={bg:$("bg").value, homily:$("homily").value}; ls(NK,notes); };
+    const saveNotes=()=>{ notes[d]={bg:$("bg").value, homily:$("homily").value}; ls(NK,notes); syncToDB('save_note',{day:d,bg:notes[d].bg,homily:notes[d].homily}); };
     window._saveNotes = saveNotes;
     $("bg").onblur=saveNotes; $("homily").onblur=saveNotes;
     [$("bg"),$("homily")].forEach(el=>{ if(!el) return; autoResize(el); el.oninput=()=>autoResize(el); });
@@ -717,6 +717,9 @@
       ls(EK,entries);
       notes[d]={bg:$("bg").value, homily:$("homily").value}; ls(NK,notes);
       if(!isDone(d)){state.completed.push(d); state.completedDates[d]=toDateStr(new Date()); ls(SK,state);}
+      syncToDB('save_entry',{day:d,med:entries[d].med,verse:entries[d].verse,saved_at:entries[d].savedAt});
+      syncToDB('save_note',{day:d,bg:notes[d].bg,homily:notes[d].homily});
+      syncToDB('save_state',{completed:state.completed,completed_dates:state.completedDates,start_date:state.startDate,reminder_time:state.reminderTime});
       const fl=$("flag"); fl.classList.add("show"); setTimeout(()=>fl.classList.remove("show"),1500);
       if(viewDay===d) viewDay=isDone(d)?d:currentDay(); render();
     };
@@ -777,15 +780,39 @@
     inp.addEventListener('input', () => { if (inp.value.length >= 4) tryPin(); });
   }
 
+  function checkProfile() {
+    if (sessionStorage.getItem('tg_profile')) return;
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:#0d0f1e;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:20px';
+    overlay.innerHTML = `<div style="color:#c9b96e;font-size:22px;font-weight:700">🕯 밤의 통독</div>
+      <div style="color:#aaa;font-size:15px">누가 사용하고 있나요?</div>
+      <div style="display:flex;gap:16px">
+        <button id="p1" style="padding:14px 32px;font-size:18px;border-radius:12px;border:1.5px solid #c9b96e;background:transparent;color:#c9b96e;cursor:pointer">나</button>
+        <button id="p2" style="padding:14px 32px;font-size:18px;border-radius:12px;border:1.5px solid #7a8db8;background:transparent;color:#7a8db8;cursor:pointer">아내</button>
+      </div>`;
+    document.body.appendChild(overlay);
+    overlay.querySelector('#p1').onclick = () => { sessionStorage.setItem('tg_profile', 'me'); location.reload(); };
+    overlay.querySelector('#p2').onclick = () => { sessionStorage.setItem('tg_profile', 'wife'); location.reload(); };
+  }
+
+  function syncToDB(action, data) {
+    const userId = sessionStorage.getItem('tg_profile');
+    if (!userId) return;
+    fetch('/api/db', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-app-pin': sessionStorage.getItem('tg_pin') || '' },
+      body: JSON.stringify({ action, user_id: userId, ...data })
+    }).catch(() => {});
+  }
+
   (async function init(){
-    checkPin();
+    if (sessionStorage.getItem('tg_pin_ok') !== '1') { checkPin(); return; }
+    if (!sessionStorage.getItem('tg_profile')) { checkProfile(); return; }
     const s=lg(SK); if(s) state={...{reminderTime:"22:00",completed:[],startDate:null,completedDates:{},claudeApiKey:""},...s};
     const en=lg(EK); if(en) entries=en;
     const n=lg(NK); if(n) notes=n;
     const ai=lg(AK); if(ai) aiCache=ai;
-    // 절 수 가중치 로드 → plan 재빌드 (성경 파일 불러온 이후라면)
     const pw=lg('tg_plan_w'); if(pw) plan=buildPlan(pw);
-    // 마이그레이션: startDate / completedDates 필드 보강
     if(!state.startDate) state.startDate=toDateStr(new Date());
     if(!state.completedDates) state.completedDates={};
     state.completed.forEach(d=>{
@@ -795,11 +822,21 @@
       }
     });
     ls(SK,state);
-    viewDay=currentDay(); render();              // 먼저 화면을 그리고
-    try{ const raw=await idbGet("bible");         // 저장해 둔 본문을 불러와 다시 그림
+    viewDay=currentDay(); render();
+    const userId=sessionStorage.getItem('tg_profile');
+    try{
+      const r=await fetch('/api/db',{method:'POST',headers:{'content-type':'application/json','x-app-pin':sessionStorage.getItem('tg_pin')||''},body:JSON.stringify({action:'load',user_id:userId})});
+      if(r.ok){
+        const {entries:de,notes:dn,state:ds}=await r.json();
+        if(ds){state={...state,completed:ds.completed||[],completedDates:ds.completed_dates||{},startDate:ds.start_date||state.startDate,reminderTime:ds.reminder_time||state.reminderTime};ls(SK,state);}
+        if(de&&de.length){de.forEach(e=>{entries[e.day]={med:e.med||'',verse:e.verse||'',savedAt:e.saved_at||''};});ls(EK,entries);}
+        if(dn&&dn.length){dn.forEach(n=>{notes[n.day]={bg:n.bg||'',homily:n.homily||''};});ls(NK,notes);}
+        viewDay=currentDay(); render();
+      }
+    }catch(e){}
+    try{ const raw=await idbGet("bible");
       if(raw){
         fileBooks=parseBible(raw);
-        // 절 수 가중치가 없으면 재계산 (localStorage.clear() 후 복구)
         if(!lg('tg_plan_w')){
           const w={};
           fileBooks.forEach((bk,bi)=>{ w[bi]={}; Object.entries(bk.chapters).forEach(([ch,vs])=>{ w[bi][+ch]=vs.length; }); });
