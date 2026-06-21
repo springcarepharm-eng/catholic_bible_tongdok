@@ -828,10 +828,18 @@
       const r=await fetch('/api/db',{method:'POST',headers:{'content-type':'application/json','x-app-pin':sessionStorage.getItem('tg_pin')||''},body:JSON.stringify({action:'load',user_id:userId})});
       if(r.ok){
         const {entries:de,notes:dn,state:ds}=await r.json();
-        if(ds){state={...state,completed:ds.completed||[],completedDates:ds.completed_dates||{},startDate:ds.start_date||state.startDate,reminderTime:ds.reminder_time||state.reminderTime};ls(SK,state);}
-        if(de&&de.length){de.forEach(e=>{entries[e.day]={med:e.med||'',verse:e.verse||'',savedAt:e.saved_at||''};});ls(EK,entries);}
-        if(dn&&dn.length){dn.forEach(n=>{notes[n.day]={bg:n.bg||'',homily:n.homily||''};});ls(NK,notes);}
-        viewDay=currentDay(); render();
+        const dbEmpty=!ds&&(!de||!de.length)&&(!dn||!dn.length);
+        if(dbEmpty){
+          const ents=Object.entries(entries).map(([d,e])=>({day:+d,med:e.med||'',verse:e.verse||'',saved_at:e.savedAt||''}));
+          const nts=Object.entries(notes).map(([d,n])=>({day:+d,bg:n.bg||'',homily:n.homily||''}));
+          const st={completed:state.completed,completed_dates:state.completedDates,start_date:state.startDate,reminder_time:state.reminderTime};
+          if(ents.length||nts.length) fetch('/api/db',{method:'POST',headers:{'content-type':'application/json','x-app-pin':sessionStorage.getItem('tg_pin')||''},body:JSON.stringify({action:'bulk_save',user_id:userId,entries:ents,notes:nts,state:st})}).catch(()=>{});
+        } else {
+          if(ds){state={...state,completed:ds.completed||[],completedDates:ds.completed_dates||{},startDate:ds.start_date||state.startDate,reminderTime:ds.reminder_time||state.reminderTime};ls(SK,state);}
+          if(de&&de.length){de.forEach(e=>{entries[e.day]={med:e.med||'',verse:e.verse||'',savedAt:e.saved_at||''};});ls(EK,entries);}
+          if(dn&&dn.length){dn.forEach(n=>{notes[n.day]={bg:n.bg||'',homily:n.homily||''};});ls(NK,notes);}
+          viewDay=currentDay(); render();
+        }
       }
     }catch(e){}
     try{ const raw=await idbGet("bible");

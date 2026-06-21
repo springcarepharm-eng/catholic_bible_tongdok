@@ -69,6 +69,16 @@ export default async function handler(req, res) {
       return res.status(r.ok ? 200 : r.status).json({});
     }
 
+    if (action === 'bulk_save') {
+      const { entries: ents, notes: nts, state: st } = req.body;
+      const reqs = [];
+      if (st) reqs.push(fetch(`${base}/user_state`, { method: 'POST', headers: { ...h, 'Prefer': 'resolution=merge-duplicates' }, body: JSON.stringify({ user_id, ...st }) }));
+      if (ents && ents.length) reqs.push(fetch(`${base}/entries`, { method: 'POST', headers: { ...h, 'Prefer': 'resolution=merge-duplicates' }, body: JSON.stringify(ents.map(e => ({ user_id, ...e }))) }));
+      if (nts && nts.length) reqs.push(fetch(`${base}/notes`, { method: 'POST', headers: { ...h, 'Prefer': 'resolution=merge-duplicates' }, body: JSON.stringify(nts.map(n => ({ user_id, ...n }))) }));
+      await Promise.all(reqs);
+      return res.status(200).json({ ok: true });
+    }
+
     return res.status(400).json({ error: 'Unknown action' });
   } catch (e) {
     return res.status(500).json({ error: e.message });
