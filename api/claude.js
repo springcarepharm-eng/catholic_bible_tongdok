@@ -5,6 +5,11 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).end();
 
+  const appPin = process.env.APP_PIN;
+  if (appPin && req.headers['x-app-pin'] !== appPin) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) return res.status(503).json({ error: 'API key not configured' });
 
