@@ -24,7 +24,9 @@ export default async function handler(req, res) {
   };
 
   const { action, user_id } = req.body || {};
-  if (!user_id) return res.status(400).json({ error: 'user_id required' });
+  if (!['chanseop', 'soyoun'].includes(user_id)) {
+    return res.status(400).json({ error: 'Invalid user_id' });
+  }
 
   try {
     if (action === 'load') {
