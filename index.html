@@ -732,7 +732,7 @@
       const fl=$("flag"); fl.classList.add("show"); setTimeout(()=>fl.classList.remove("show"),1500);
       if(viewDay===d) viewDay=isDone(d)?d:todayDay(); render();
     };
-    if($("undo")) $("undo").onclick=()=>{state.completed=state.completed.filter(x=>x!==d); delete state.completedDates[d]; ls(SK,state); render();};
+    if($("undo")) $("undo").onclick=()=>{state.completed=state.completed.filter(x=>x!==d); delete state.completedDates[d]; ls(SK,state); syncToDB('save_state',{completed:state.completed,completed_dates:state.completedDates,start_date:state.startDate,reminder_time:state.reminderTime}); render();};
     maybeAutoFetch(d);
   }
 
@@ -844,9 +844,33 @@
           const st={completed:state.completed,completed_dates:state.completedDates,start_date:state.startDate,reminder_time:state.reminderTime};
           if(ents.length||nts.length) fetch('/api/db',{method:'POST',headers:{'content-type':'application/json','x-app-pin':sessionStorage.getItem('tg_pin')||''},body:JSON.stringify({action:'bulk_save',user_id:userId,entries:ents,notes:nts,state:st})}).catch(()=>{});
         } else {
-          if(ds){state={...state,completed:ds.completed||[],completedDates:ds.completed_dates||{},startDate:ds.start_date||state.startDate,reminderTime:ds.reminder_time||state.reminderTime};ls(SK,state);}
-          if(de&&de.length){de.forEach(e=>{entries[e.day]={med:e.med||'',verse:e.verse||'',savedAt:e.saved_at||''};});ls(EK,entries);}
-          if(dn&&dn.length){dn.forEach(n=>{notes[n.day]={bg:n.bg||'',homily:n.homily||''};});ls(NK,notes);}
+          let needStateSync=false;
+          if(ds){
+            const dbComp=ds.completed||[];
+            const mergedComp=[...new Set([...state.completed,...dbComp])];
+            const mergedDates={...(ds.completed_dates||{}),...state.completedDates};
+            if(mergedComp.length>dbComp.length) needStateSync=true;
+            state={...state,completed:mergedComp,completedDates:mergedDates,startDate:ds.start_date||state.startDate,reminderTime:ds.reminder_time||state.reminderTime};
+            ls(SK,state);
+          }
+          if(de&&de.length){
+            de.forEach(e=>{
+              const loc=entries[e.day];
+              if(!loc||!loc.savedAt||(e.saved_at&&e.saved_at>loc.savedAt)){entries[e.day]={med:e.med||'',verse:e.verse||'',savedAt:e.saved_at||''};}
+            });
+            ls(EK,entries);
+          }
+          if(dn&&dn.length){
+            dn.forEach(n=>{
+              const loc=notes[n.day];
+              const dbHas=n.bg||n.homily;
+              const locHas=loc&&(loc.bg||loc.homily);
+              if(dbHas&&!locHas){notes[n.day]={bg:n.bg||'',homily:n.homily||''};}
+              else if(dbHas&&locHas){notes[n.day]={bg:loc.bg||n.bg||'',homily:loc.homily||n.homily||''};}
+            });
+            ls(NK,notes);
+          }
+          if(needStateSync) syncToDB('save_state',{completed:state.completed,completed_dates:state.completedDates,start_date:state.startDate,reminder_time:state.reminderTime});
           viewDay=todayDay(); render();
         }
       }
