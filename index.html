@@ -117,7 +117,7 @@
 
   .savebar{display:flex; align-items:center; gap:10px; margin-top:12px; padding-left:8px}
   .savebar .btn-gold{flex:1}
-  .saved-flag{font-size:12px; color:var(--gold); opacity:0; transition:.3s}
+  .saved-flag{font-size:12px; color:var(--gold); opacity:0; transition:opacity .4s}
   .saved-flag.show{opacity:1}
 
   .reminder-row{display:flex; gap:9px; align-items:flex-end; flex-wrap:wrap; padding-left:8px}
@@ -637,15 +637,6 @@
       </div>
 
       <div class="panel" style="margin-top:14px">
-        <h3>백업</h3>
-        <div class="reminder-row" style="margin-top:6px">
-          <button class="btn btn-sm" id="exportBtn">💾 내보내기</button>
-          <button class="btn btn-sm" id="importBtn">📂 불러오기</button>
-        </div>
-        <p class="hint">진도·묵상을 파일로 저장하거나 다른 기기에서 불러와요. <b>성경 본문은 포함되지 않아요</b> (용량·저작권).</p>
-      </div>
-
-      <div class="panel" style="margin-top:14px">
         <h3>읽기 알림 시각</h3>
         <div class="reminder-row">
           <div><label class="fld" for="rtime" style="padding-left:0">시각</label>
@@ -660,6 +651,15 @@
           · 배경지식·강론은 Claude 채팅에 “오늘 말씀”이라고 보내 받은 글을 위 칸에 붙여넣어 보관하세요.<br>
           · 묵상·진도·붙여넣은 글은 모두 이 기기 안에만 저장됩니다.</div></details>
         <details class="hist"><summary>지난 묵상 다시 보기</summary><div class="hist-list" id="histlist"></div></details>
+      </div>
+
+      <div class="panel" style="margin-top:14px">
+        <h3>백업</h3>
+        <div class="reminder-row" style="margin-top:6px">
+          <button class="btn btn-sm" id="exportBtn">💾 내보내기</button>
+          <button class="btn btn-sm" id="importBtn">📂 불러오기</button>
+        </div>
+        <p class="hint">진도·묵상을 파일로 저장하거나 다른 기기에서 불러와요. <b>성경 본문은 포함되지 않아요</b> (용량·저작권).</p>
       </div>
 
       <p class="foot">밤의 통독 · 본문은 기기에만 보관 · 매일 밤, 한 장씩.</p>
@@ -729,7 +729,9 @@
       syncToDB('save_entry',{day:d,med:entries[d].med,verse:entries[d].verse,saved_at:entries[d].savedAt});
       syncToDB('save_note',{day:d,bg:notes[d].bg,homily:notes[d].homily});
       syncToDB('save_state',{completed:state.completed,completed_dates:state.completedDates,start_date:state.startDate,reminder_time:state.reminderTime});
-      const fl=$("flag"); fl.classList.add("show"); setTimeout(()=>fl.classList.remove("show"),1500);
+      const fl=$("flag");
+      const now=new Date(); const savedLabel=now.toLocaleDateString('ko-KR',{month:'numeric',day:'numeric'})+' '+now.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+      fl.textContent=`저장됨 ✓ ${savedLabel}`; fl.classList.add("show"); setTimeout(()=>fl.classList.remove("show"),2500);
       if(viewDay===d) viewDay=isDone(d)?d:todayDay(); render();
     };
     if($("undo")) $("undo").onclick=()=>{state.completed=state.completed.filter(x=>x!==d); delete state.completedDates[d]; ls(SK,state); syncToDB('save_state',{completed:state.completed,completed_dates:state.completedDates,start_date:state.startDate,reminder_time:state.reminderTime}); render();};
@@ -797,7 +799,7 @@
       <div style="color:#aaa;font-size:15px">누가 사용하고 있나요?</div>
       <div style="display:flex;gap:16px">
         <button id="p1" style="padding:14px 32px;font-size:18px;border-radius:12px;border:1.5px solid #c9b96e;background:transparent;color:#c9b96e;cursor:pointer">찬섭</button>
-        <button id="p2" style="padding:14px 32px;font-size:18px;border-radius:12px;border:1.5px solid #7a8db8;background:transparent;color:#7a8db8;cursor:pointer">소연</button>
+        <button id="p2" style="padding:14px 32px;font-size:18px;border-radius:12px;border:1.5px solid #d4879a;background:transparent;color:#d4879a;cursor:pointer">소연</button>
       </div>`;
     document.body.appendChild(overlay);
     overlay.querySelector('#p1').onclick = () => { sessionStorage.setItem('tg_profile', 'chanseop'); location.reload(); };
