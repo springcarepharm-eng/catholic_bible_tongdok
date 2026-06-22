@@ -16,11 +16,12 @@ export default async function handler(req, res) {
     return res.status(503).json({ error: 'DB not configured' });
   }
 
-  const base = `${SUPABASE_URL}/rest/v1`;
+  const base = `${SUPABASE_URL.replace(/\/+$/, '')}/rest/v1`;
   const h = {
     'apikey': SUPABASE_KEY,
     'Authorization': `Bearer ${SUPABASE_KEY}`,
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
+    'Prefer': 'resolution=merge-duplicates,return=minimal'
   };
 
   const { action, user_id } = req.body || {};
@@ -41,9 +42,9 @@ export default async function handler(req, res) {
 
     if (action === 'save_entry') {
       const { day, med, verse, saved_at } = req.body;
-      const r = await fetch(`${base}/entries`, {
+      const r = await fetch(`${base}/entries?on_conflict=user_id,day`, {
         method: 'POST',
-        headers: { ...h, 'Prefer': 'resolution=merge-duplicates' },
+        headers: h,
         body: JSON.stringify({ user_id, day, med: med||'', verse: verse||'', saved_at: saved_at||'' })
       });
       return res.status(r.ok ? 200 : r.status).json({});
@@ -51,9 +52,9 @@ export default async function handler(req, res) {
 
     if (action === 'save_note') {
       const { day, bg, homily } = req.body;
-      const r = await fetch(`${base}/notes`, {
+      const r = await fetch(`${base}/notes?on_conflict=user_id,day`, {
         method: 'POST',
-        headers: { ...h, 'Prefer': 'resolution=merge-duplicates' },
+        headers: h,
         body: JSON.stringify({ user_id, day, bg: bg||'', homily: homily||'' })
       });
       return res.status(r.ok ? 200 : r.status).json({});
@@ -61,9 +62,9 @@ export default async function handler(req, res) {
 
     if (action === 'save_state') {
       const { completed, completed_dates, start_date, reminder_time } = req.body;
-      const r = await fetch(`${base}/user_state`, {
+      const r = await fetch(`${base}/user_state?on_conflict=user_id`, {
         method: 'POST',
-        headers: { ...h, 'Prefer': 'resolution=merge-duplicates' },
+        headers: h,
         body: JSON.stringify({ user_id, completed: completed||[], completed_dates: completed_dates||{}, start_date: start_date||'', reminder_time: reminder_time||'22:00' })
       });
       return res.status(r.ok ? 200 : r.status).json({});
@@ -72,9 +73,9 @@ export default async function handler(req, res) {
     if (action === 'bulk_save') {
       const { entries: ents, notes: nts, state: st } = req.body;
       const reqs = [];
-      if (st) reqs.push(fetch(`${base}/user_state`, { method: 'POST', headers: { ...h, 'Prefer': 'resolution=merge-duplicates' }, body: JSON.stringify({ user_id, ...st }) }));
-      if (ents && ents.length) reqs.push(fetch(`${base}/entries`, { method: 'POST', headers: { ...h, 'Prefer': 'resolution=merge-duplicates' }, body: JSON.stringify(ents.map(e => ({ user_id, ...e }))) }));
-      if (nts && nts.length) reqs.push(fetch(`${base}/notes`, { method: 'POST', headers: { ...h, 'Prefer': 'resolution=merge-duplicates' }, body: JSON.stringify(nts.map(n => ({ user_id, ...n }))) }));
+      if (st) reqs.push(fetch(`${base}/user_state?on_conflict=user_id`, { method: 'POST', headers: h, body: JSON.stringify({ user_id, ...st }) }));
+      if (ents && ents.length) reqs.push(fetch(`${base}/entries?on_conflict=user_id,day`, { method: 'POST', headers: h, body: JSON.stringify(ents.map(e => ({ user_id, ...e }))) }));
+      if (nts && nts.length) reqs.push(fetch(`${base}/notes?on_conflict=user_id,day`, { method: 'POST', headers: h, body: JSON.stringify(nts.map(n => ({ user_id, ...n }))) }));
       await Promise.all(reqs);
       return res.status(200).json({ ok: true });
     }
