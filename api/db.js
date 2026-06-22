@@ -17,6 +17,7 @@ export default async function handler(req, res) {
   }
 
   const base = `${SUPABASE_URL.replace(/\/+$/, '')}/rest/v1`;
+  console.log('DB base URL:', base);
   const h = {
     'apikey': SUPABASE_KEY,
     'Authorization': `Bearer ${SUPABASE_KEY}`,
@@ -47,6 +48,8 @@ export default async function handler(req, res) {
         headers: h,
         body: JSON.stringify({ user_id, day, med: med||'', verse: verse||'', saved_at: saved_at||'' })
       });
+      const body = await r.text();
+      console.log('save_entry status:', r.status, 'body:', body);
       return res.status(r.ok ? 200 : r.status).json({});
     }
 
