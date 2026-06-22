@@ -117,8 +117,8 @@
 
   .savebar{display:flex; align-items:center; gap:10px; margin-top:12px; padding-left:8px}
   .savebar .btn-gold{flex:1}
-  .saved-flag{font-size:12px; color:var(--gold); opacity:0; transition:opacity .4s}
-  .saved-flag.show{opacity:1}
+  #toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(16px);background:rgba(30,28,24,.92);color:var(--gold);font-size:14px;padding:10px 20px;border-radius:24px;pointer-events:none;opacity:0;transition:opacity .3s,transform .3s;z-index:9999;white-space:nowrap}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
   .reminder-row{display:flex; gap:9px; align-items:flex-end; flex-wrap:wrap; padding-left:8px}
   .hint{color:var(--muted); font-size:12px; padding-left:8px; margin:8px 0 0}
@@ -146,6 +146,7 @@
 </style>
 </head>
 <body>
+<div id="toast"></div>
 <div id="app"><div class="loading">노트를 펼치는 중…</div></div>
 <input type="file" id="filein" accept=".txt,text/plain" style="display:none">
 <input type="file" id="backupin" accept=".json,application/json" style="display:none">
@@ -208,6 +209,8 @@
   let canStore=true;
   function lg(k){try{const v=localStorage.getItem(k); return v?JSON.parse(v):null;}catch(e){return null;}}
   function ls(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){canStore=false;}}
+  let _toastTimer;
+  function showToast(msg){const t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.classList.add('show');clearTimeout(_toastTimer);_toastTimer=setTimeout(()=>t.classList.remove('show'),2500);}
   // 성경 본문은 용량이 커서 IndexedDB에 저장 (localStorage 한도 초과 방지)
   function idbOpen(){return new Promise((res,rej)=>{ if(!window.indexedDB) return rej("no-idb");
     const r=indexedDB.open("tongdok_db",1);
@@ -610,7 +613,6 @@
             <div class="savebar">
               <button class="btn-gold" id="save">${isDone(d)?'수정 저장':'저장하고 읽음 표시'}</button>
               ${isDone(d)?'<button class="btn btn-ghost btn-sm" id="undo">읽음 취소</button>':''}
-              <span class="saved-flag" id="flag">저장됨 ✓</span>
             </div>
           </div>
         </div>
@@ -729,9 +731,8 @@
       syncToDB('save_entry',{day:d,med:entries[d].med,verse:entries[d].verse,saved_at:entries[d].savedAt});
       syncToDB('save_note',{day:d,bg:notes[d].bg,homily:notes[d].homily});
       syncToDB('save_state',{completed:state.completed,completed_dates:state.completedDates,start_date:state.startDate,reminder_time:state.reminderTime});
-      const fl=$("flag");
       const now=new Date(); const savedLabel=now.toLocaleDateString('ko-KR',{month:'numeric',day:'numeric'})+' '+now.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
-      fl.textContent=`저장됨 ✓ ${savedLabel}`; fl.classList.add("show"); setTimeout(()=>fl.classList.remove("show"),2500);
+      showToast(`저장됨 ✓  ${savedLabel}`);
       if(viewDay===d) viewDay=isDone(d)?d:todayDay(); render();
     };
     if($("undo")) $("undo").onclick=()=>{state.completed=state.completed.filter(x=>x!==d); delete state.completedDates[d]; ls(SK,state); syncToDB('save_state',{completed:state.completed,completed_dates:state.completedDates,start_date:state.startDate,reminder_time:state.reminderTime}); render();};
