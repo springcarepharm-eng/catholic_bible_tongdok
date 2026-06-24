@@ -256,13 +256,8 @@
   const isDone=d=>state.completed.includes(d);
   const currentDay=()=>{for(let d=1;d<=DAYS;d++) if(!isDone(d)) return d; return DAYS;};
   const todayDay=()=>{
-    if(!state.startDate) return currentDay();
-    const startMs=new Date(state.startDate+'T00:00:00+09:00').getTime();
-    const nowKST=new Date(Date.now()+9*60*60*1000);
-    const todayStr=nowKST.toISOString().slice(0,10);
-    const todayMs=new Date(todayStr+'T00:00:00+09:00').getTime();
-    const diff=Math.round((todayMs-startMs)/86400000);
-    return Math.min(Math.max(diff+1,1),DAYS);
+    for(let i=1;i<=DAYS;i++){if(!state.completed.includes(i))return i;}
+    return DAYS;
   };
 
   // ---- 백업 / 복원 ----
